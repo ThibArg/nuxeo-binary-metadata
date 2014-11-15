@@ -12,7 +12,7 @@
   <artifactId>nuxeo-binary-metadata-mp</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>zip</packaging>
-  <name>Marketplace package - ImageMetadata Utils</name>
+  <name>Marketplace package - Binary Metadata Utils</name>
 
   <dependencies>
     <dependency>
