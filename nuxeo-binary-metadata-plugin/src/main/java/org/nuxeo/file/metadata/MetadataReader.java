@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -85,11 +86,11 @@ public class MetadataReader {
     }
 
     protected void checkCommandLines() {
-        if(!isExifToolAvailable(false)) {
+        if (!isExifToolAvailable(false)) {
             log.warn("ExifTool is not available, some command may fail");
         }
 
-        if(!isGraphicsMagickAvailable(false)) {
+        if (!isGraphicsMagickAvailable(false)) {
             log.warn("GraphicsMagick is not available, some command may fail");
         }
 
@@ -127,19 +128,53 @@ public class MetadataReader {
         return graphicsMagickAvailability == 1;
     }
 
-    public String getAllMetadata() throws InfoException {
+    /**
+     * Get all the tags available using <code>identify -verbose</code> for
+     * ImageMagick and GraphicsMagick, and the <code>-all</code> tag when used
+     * with ExifTool.
+     *
+     * @param inToolToUse
+     * @return
+     * @throws InfoException
+     *
+     * @since 6.0
+     */
+    public String getAllMetadata(WHICH_TOOL inToolToUse) throws ClientException, InfoException {
+
         String result = "";
 
-        Info info = new Info(filePath);
+        if(inToolToUse == WHICH_TOOL.EXIFTOOL) {
 
-        Enumeration<String> props = info.getPropertyNames();
-        while (props.hasMoreElements()) {
-            String propertyName = props.nextElement();
-            result += propertyName + "=" + info.getProperty(propertyName)
-                    + "\n";
+            HashMap<String, String> r = getMetadataWithExifTool(null);
+            Set<String> allKeys = r.keySet();
+            for(String oneProp : allKeys) {
+                result += oneProp + "=" + r.get(oneProp) + "\n";
+            }
+
+        } else {
+            Info info = getInfo(inToolToUse == WHICH_TOOL.GRAPHICSMAGICK);
+
+            Enumeration<String> props = info.getPropertyNames();
+            while (props.hasMoreElements()) {
+                String propertyName = props.nextElement();
+                result += propertyName + "=" + info.getProperty(propertyName)
+                        + "\n";
+            }
         }
 
         return result;
+    }
+
+    /**
+     * Wrapper for getAllMetadata(WHICH_TOOL inToolToUse), using ImageMagick
+     *
+     * @return
+     * @throws InfoException
+     *
+     * @since 6.0
+     */
+    public String getAllMetadata() throws InfoException {
+        return getAllMetadata(WHICH_TOOL.IMAGEMAGICK);
     }
 
     /*
@@ -147,38 +182,28 @@ public class MetadataReader {
      * GraohicsMagick, use the dedicated classes: GMOperation and
      * GraphicsMagickCmd
      */
-    protected synchronized Info getInfoFromGraphicsMagick()
+    protected synchronized Info getInfo(boolean inUseGM)
             throws ClientException {
 
+        Properties props = null;
         Info info = null;
-        Properties props = System.getProperties();
-        props.setProperty("im4java.useGM", "true");
+
+        if(inUseGM) {
+            props = System.getProperties();
+            props.setProperty("im4java.useGM", "true");
+        }
 
         try {
             info = new Info(filePath);
         } catch (InfoException e) {
             throw new ClientException(e);
         } finally {
-            props.setProperty("im4java.useGM", "false");
+            if(inUseGM) {
+                props.setProperty("im4java.useGM", "false");
+            }
         }
 
         return info;
-    }
-
-    /**
-     * Wrapper for getMetadata(String[] inTheseKeys, WHICH_TOOL inToolToUse)
-     * using ImageMagick by default
-     *
-     * @param inTheseKeys
-     * @return a hash map with the values. A key not found is in the map with a
-     *         value of ""
-     * @throws ClientException
-     *
-     * @since 6.0
-     */
-    public HashMap<String, String> getMetadata(String[] inTheseKeys)
-            throws ClientException {
-        return getMetadata(inTheseKeys, WHICH_TOOL.IMAGEMAGICK);
     }
 
     /**
@@ -214,28 +239,20 @@ public class MetadataReader {
 
             } else {
 
-                Info info = null;
-
-                if (inToolToUse == WHICH_TOOL.GRAPHICSMAGICK) {
-                    info = getInfoFromGraphicsMagick();
-                } else {
-                    info = new Info(filePath);
-                }
-
+                Info info = getInfo(inToolToUse == WHICH_TOOL.GRAPHICSMAGICK);
                 if (inTheseKeys == null || inTheseKeys.length == 0) {
 
                     Enumeration<String> props = info.getPropertyNames();
                     while (props.hasMoreElements()) {
                         String propertyName = props.nextElement();
-                        result.put(propertyName,
-                                info.getProperty(propertyName));
+                        result.put(propertyName, info.getProperty(propertyName));
                     }
 
                 } else {
                     for (String oneProp : inTheseKeys) {
                         String value = "";
 
-                        if(oneProp != null && !oneProp.isEmpty()) {
+                        if (oneProp != null && !oneProp.isEmpty()) {
                             value = info.getProperty(oneProp);
                             if (value == null) {
                                 value = "";
@@ -257,12 +274,28 @@ public class MetadataReader {
                     }
                 }
             }
-        } catch (NullPointerException | InfoException e) {
-            throw new ClientException(e);
+        } catch (ClientException e) {
+            throw e;
         } finally {
 
         }
         return result;
+    }
+
+    /**
+     * Wrapper for getMetadata(String[] inTheseKeys, WHICH_TOOL inToolToUse)
+     * using ImageMagick by default.
+     *
+     * @param inTheseKeys
+     * @return a hash map with the values. A key not found is in the map with a
+     *         value of ""
+     * @throws ClientException
+     *
+     * @since 6.0
+     */
+    public HashMap<String, String> getMetadata(String[] inTheseKeys)
+            throws ClientException {
+        return getMetadata(inTheseKeys, WHICH_TOOL.IMAGEMAGICK);
     }
 
     /**
@@ -295,6 +328,23 @@ public class MetadataReader {
         }
     }
 
+    /**
+     * Utility class to parse a line returned by a "get tag" command line
+     * (identify, ...). Usually, such info is returned in kind-of formatted
+     * text. For example:
+     *
+     * <pre>
+     * File Type                       : TIFF
+     * MIME Type                       : image/tiff
+     * Exif Byte Order                 : Little-endian (Intel, II)
+     * Image Width                     : 2344
+     * Image Height                    : 7200
+     * </pre>
+     *
+     * This class parses the line, extracting key and value
+     *
+     * @since TODO
+     */
     public class FilterLine {
 
         protected String line;
@@ -307,7 +357,7 @@ public class MetadataReader {
             line = "";
         }
 
-        protected void parseLine() {
+        protected void parse() {
             key = null;
             value = "";
 
@@ -322,7 +372,7 @@ public class MetadataReader {
 
         public void setLine(String inLine) {
             line = inLine;
-            parseLine();
+            parse();
         }
 
         public String getKey() {
@@ -360,7 +410,7 @@ public class MetadataReader {
             ETOperation op = new ETOperation();
             if (hasKeys) {
                 for (String oneProp : inTheseKeys) {
-                    if(oneProp != null && !oneProp.isEmpty()) {
+                    if (oneProp != null && !oneProp.isEmpty()) {
                         op.getTags(oneProp);
                     }
                 }
@@ -404,55 +454,13 @@ public class MetadataReader {
         return result;
     }
 
-    protected String test() throws IOException, InterruptedException,
-            IM4JavaException {
-        ETOperation op = new ETOperation();
-        // op.getTags("Filename","ImageWidth","ImageHeight","keywords",
-        // "Brand_Code", "Title", "Creator", "Description", "Rights");
-        // REMEMBER: Tag names are case insensitive with exiftool. So ImageWidth
-        // or imagewidth are OK
-
-        /*
-         * op.getTags("FileName", "ImageWidth", "ImageHeight", "FileType",
-         * "Orientation", "XResolution", "YResolution", "ResolutionUnit");
-         * op.getTags("CreatorTool"); op.getTags("Title", "Subject",
-         * "Caption-Abstract", "Creator", "Description", "Rights");
-         *
-         * // Specific XMP-EJ-GALLo op.getTags("Brand_Code", "Brand_Name",
-         * "Project_Name");
-         */
-        op.getTags("all");
-        op.addImage();
-
-        // We don't wa nt the output as Human Readable. We want "ImageWidht",
-        // "XResolution", and not "Image Width", "X Reslution"
-        op.addRawArgs("-s");
-
-        // setup command and execute it (capture output)
-        ArrayListOutputConsumer output = new ArrayListOutputConsumer();
-        ExiftoolCmd et = new ExiftoolCmd();
-        et.setOutputConsumer(output);
-        et.run(op, filePath);
-
-        String s = "";
-        // dump output
-        ArrayList<String> cmdOutput = output.getOutput();
-        for (String line : cmdOutput) {
-            s += line + "\n";
-        }
-
-        return s;
-    }
-
+    /*
+     * [Temp, for quick tests]
+     */
     public String getMetadataWithGM() throws IOException, InterruptedException,
             IM4JavaException {
 
-        String result = "";
-
-        result = test();
-
-        return result;
-
+        return "";
         /*
          * GMOperation op = new GMOperation(); op.addRawArgs("-verbose");
          * op.addImage(); StringOutputConsumer output = new
@@ -470,8 +478,8 @@ public class MetadataReader {
          *
          *
          *
-         * Info infoIM = new Info(filePath); String s1 = "";
-         * Enumeration<String> zeProps = infoIM.getPropertyNames(); while
+         * Info infoIM = new Info(filePath); String s1 = ""; Enumeration<String>
+         * zeProps = infoIM.getPropertyNames(); while
          * (zeProps.hasMoreElements()) { String propertyName =
          * zeProps.nextElement(); s1 += propertyName + "=" +
          * infoIM.getProperty(propertyName) + "\n"; }

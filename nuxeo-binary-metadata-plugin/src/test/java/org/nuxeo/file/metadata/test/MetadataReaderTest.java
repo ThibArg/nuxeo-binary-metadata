@@ -230,33 +230,11 @@ public class MetadataReaderTest {
         assertNotNull(ctx);
 
         // ========================================
-        // TEST WITH DEFAULT VALUES
+        // ASK FOR ALL PROPERTIES
         // ========================================
         String changeToken = docPNG.getChangeToken();
         ctx.setInput(docPNG);
         OperationChain chain = new OperationChain("testChain");
-        // let default value for "xpath", "properties" and "save"
-        chain.add(ExtractBinaryMetadataInDocumentOp.ID);
-        service.run(ctx, chain);
-
-        // Check the doc was modified
-        assertNotSame(changeToken, docPNG.getChangeToken());
-
-        // Check value for this PNG
-        assertEquals((long) 100,
-                docPNG.getPropertyValue("imd:pixel_xdimension"));
-        assertEquals((long) 100,
-                docPNG.getPropertyValue("imd:pixel_ydimension"));
-        assertEquals("sRGB", docPNG.getPropertyValue("imd:color_space"));
-        assertEquals((long) 96, docPNG.getPropertyValue("imd:xresolution"));
-        assertEquals((long) 96, docPNG.getPropertyValue("imd:yresolution"));
-
-        // ========================================
-        // ASK FOR ALL PROPERTIES
-        // ========================================
-        changeToken = docPNG.getChangeToken();
-        ctx.setInput(docPNG);
-        chain = new OperationChain("testChain");
         // Let xpath and save the default values
         Properties props = new Properties();
         props.put("dc:description", "all");
@@ -279,8 +257,10 @@ public class MetadataReaderTest {
         changeToken = docPNG.getChangeToken();
         ctx.setInput(docPNG);
         chain = new OperationChain("testChain");
-        // Let xpath and properties the default values
-        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("save", false);
+
+        props = new Properties();
+        props.put("dc:description", "all");
+        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("properties", props).set("save", false);
         service.run(ctx, chain);
 
         assertEquals(changeToken, docPNG.getChangeToken());
@@ -304,8 +284,10 @@ public class MetadataReaderTest {
         String changeToken = aPictDoc.getChangeToken();
         ctx.setInput(aPictDoc);
         OperationChain chain = new OperationChain("testChain");
+        Properties props = new Properties();
+        props.put("imd:pixel_xdimension", KEYS.WIDTH);
         // Here too, we don't save
-        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("save", false);
+        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("properties", props).set("save", false);
         service.run(ctx, chain);
 
         assertEquals(changeToken, aPictDoc.getChangeToken());
