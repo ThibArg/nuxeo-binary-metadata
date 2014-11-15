@@ -23,9 +23,11 @@ import java.io.InputStreamReader;
 
 import org.im4java.process.OutputConsumer;
 
-/*
- * Utility class use by exiftool wrappers (mainly), to get the result of a command as
- * a String. im4java already provides an ArrayListOutputConsumer
+/**
+ * Utility class use by exiftool wrappers (mainly), to get the result of a
+ * command as a String. im4java already provides an ArrayListOutputConsumer.
+ *
+ * @since TODO
  */
 public class StringOutputConsumer implements OutputConsumer {
     protected String output = "";

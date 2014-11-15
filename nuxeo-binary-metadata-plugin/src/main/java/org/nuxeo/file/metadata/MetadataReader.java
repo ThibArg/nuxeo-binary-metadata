@@ -234,7 +234,7 @@ public class MetadataReader {
                 } else {
                     for (String oneProp : inTheseKeys) {
                         String value = "";
-                        
+
                         if(oneProp != null && !oneProp.isEmpty()) {
                             value = info.getProperty(oneProp);
                             if (value == null) {
@@ -304,7 +304,7 @@ public class MetadataReader {
         protected String value;
 
         public FilterLine() {
-
+            line = "";
         }
 
         protected void parseLine() {
@@ -399,8 +399,6 @@ public class MetadataReader {
 
         } catch (IOException | InterruptedException | IM4JavaException e) {
             throw new ClientException(e);
-        } finally {
-
         }
 
         return result;
