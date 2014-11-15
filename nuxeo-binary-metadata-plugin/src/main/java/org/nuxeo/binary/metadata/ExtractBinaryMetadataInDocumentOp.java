@@ -111,11 +111,14 @@ public class ExtractBinaryMetadataInDocumentOp {
         }
 
         // Get the blob
-        // We also give up silently if there is no binary
+        // We also give up silently if there is no binary, except if there is an error in the xpath
         Blob theBlob = null;
         try {
             theBlob = (Blob) inDoc.getPropertyValue(xpath);
         } catch (PropertyException e) {
+            if(e.getClass().getSimpleName().equals("PropertyNotFoundException")) {
+                throw new ClientException(e);
+            }
             return inDoc;
         }
         if (theBlob == null) {

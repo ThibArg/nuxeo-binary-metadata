@@ -128,26 +128,70 @@ public class MetadataReader {
         return graphicsMagickAvailability == 1;
     }
 
+    /*
+     * If we want to use GraphicsMagick without using the dedictaed im4java
+     * class, we must dynamically change a System property. We want to protect
+     * the global change to im4java. For non blocking use of GraohicsMagick, use
+     * the dedicated classes: GMOperation and GraphicsMagickCmd
+     */
+    protected synchronized Info getInfo(boolean inUseGM) throws ClientException {
+
+        Properties props = null;
+        Info info = null;
+
+        if (inUseGM) {
+            props = System.getProperties();
+            props.setProperty("im4java.useGM", "true");
+        }
+
+        try {
+            info = new Info(filePath);
+        } catch (InfoException e) {
+            throw new ClientException(e);
+        } finally {
+            if (inUseGM) {
+                props.setProperty("im4java.useGM", "false");
+            }
+        }
+
+        return info;
+    }
+
+    /**
+     * Wrapper for getAllMetadata(WHICH_TOOL inToolToUse) using ImageMagick
+     *
+     * @return a string with all the metadata. The string is formated by the
+     *         tool used
+     * @throws InfoException
+     *
+     * @since 6.0
+     */
+    public String getAllMetadata() throws InfoException {
+        return getAllMetadata(WHICH_TOOL.IMAGEMAGICK);
+    }
+
     /**
      * Get all the tags available using <code>identify -verbose</code> for
      * ImageMagick and GraphicsMagick, and the <code>-all</code> tag when used
      * with ExifTool.
      *
      * @param inToolToUse
-     * @return
+     * @return a string with all the metadata. The string is formated by the
+     *         tool used
      * @throws InfoException
      *
      * @since 6.0
      */
-    public String getAllMetadata(WHICH_TOOL inToolToUse) throws ClientException, InfoException {
+    public String getAllMetadata(WHICH_TOOL inToolToUse)
+            throws ClientException, InfoException {
 
         String result = "";
 
-        if(inToolToUse == WHICH_TOOL.EXIFTOOL) {
+        if (inToolToUse == WHICH_TOOL.EXIFTOOL) {
 
             HashMap<String, String> r = getMetadataWithExifTool(null);
             Set<String> allKeys = r.keySet();
-            for(String oneProp : allKeys) {
+            for (String oneProp : allKeys) {
                 result += oneProp + "=" + r.get(oneProp) + "\n";
             }
 
@@ -163,47 +207,6 @@ public class MetadataReader {
         }
 
         return result;
-    }
-
-    /**
-     * Wrapper for getAllMetadata(WHICH_TOOL inToolToUse), using ImageMagick
-     *
-     * @return
-     * @throws InfoException
-     *
-     * @since 6.0
-     */
-    public String getAllMetadata() throws InfoException {
-        return getAllMetadata(WHICH_TOOL.IMAGEMAGICK);
-    }
-
-    /*
-     * We want to protect the global change to im4java. For non blocking use of
-     * GraohicsMagick, use the dedicated classes: GMOperation and
-     * GraphicsMagickCmd
-     */
-    protected synchronized Info getInfo(boolean inUseGM)
-            throws ClientException {
-
-        Properties props = null;
-        Info info = null;
-
-        if(inUseGM) {
-            props = System.getProperties();
-            props.setProperty("im4java.useGM", "true");
-        }
-
-        try {
-            info = new Info(filePath);
-        } catch (InfoException e) {
-            throw new ClientException(e);
-        } finally {
-            if(inUseGM) {
-                props.setProperty("im4java.useGM", "false");
-            }
-        }
-
-        return info;
     }
 
     /**

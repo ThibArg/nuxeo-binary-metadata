@@ -58,7 +58,7 @@ import com.google.inject.Inject;
 @RunWith(FeaturesRunner.class)
 @Features({ PlatformFeature.class, CoreFeature.class,
         EmbeddedAutomationServerFeature.class })
-@Deploy({ "org.nuxeo.ecm.platform.picture.core", "nuxeo-file-metadata",
+@Deploy({ "org.nuxeo.ecm.platform.picture.core", "nuxeo-binary-metadata",
         "org.nuxeo.ecm.platform.commandline.executor" })
 public class MetadataReaderTest {
 
@@ -97,6 +97,17 @@ public class MetadataReaderTest {
 
     @Inject
     AutomationService service;
+
+    protected void doLog(String what) {
+        System.out.println(what);
+    }
+
+    // Not sure it's the best way to get the current method name, but at least
+    // it works
+    protected String getCurrentMethodName(RuntimeException e) {
+        StackTraceElement currentElement = e.getStackTrace()[0];
+        return currentElement.getMethodName();
+    }
 
     @Before
     public void setUp() {
@@ -137,13 +148,12 @@ public class MetadataReaderTest {
 
     }
 
-    protected void checkValues(File inWhichOne, String inWidth,
+    protected void checkImagesValues(File inWhichOne, String inWidth,
             String inHeight, String inColorspace, String inResolution,
             String inUnits, int xDPI, int yDPI) throws Exception {
 
         String theAssertMessage = "getMetadata() for " + inWhichOne.getName();
-        MetadataReader mdr = new MetadataReader(
-                inWhichOne.getAbsolutePath());
+        MetadataReader mdr = new MetadataReader(inWhichOne.getAbsolutePath());
 
         String[] keysStr = { KEYS.WIDTH, KEYS.HEIGHT, KEYS.COLORSPACE,
                 KEYS.RESOLUTION, KEYS.UNITS };
@@ -166,20 +176,26 @@ public class MetadataReaderTest {
     }
 
     @Test
-    public void testAllImages() throws Exception {
-        checkValues(filePNG, "100", "100", "sRGB", "37.79x37.79",
+    public void testImages() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
+        checkImagesValues(filePNG, "100", "100", "sRGB", "37.79x37.79",
                 "PixelsPerCentimeter", 96, 96);
-        checkValues(fileGIF, "328", "331", "sRGB", "72x72", "Undefined", 72, 72);
-        checkValues(fileTIF, "438", "640", "sRGB", "72x72", "PixelsPerInch",
+        checkImagesValues(fileGIF, "328", "331", "sRGB", "72x72", "Undefined",
                 72, 72);
-        checkValues(fileJPEG, "1597", "232", "sRGB", "96x96", "PixelsPerInch",
-                96, 96);
+        checkImagesValues(fileTIF, "456", "180", "sRGB", "72x72",
+                "PixelsPerInch", 72, 72);
+        checkImagesValues(fileJPEG, "1597", "232", "sRGB", "96x96",
+                "PixelsPerInch", 96, 96);
     }
 
     @Test
     public void testGetAllMetadata() throws Exception {
-        MetadataReader mdr = new MetadataReader(
-                filePNG.getAbsolutePath());
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
+        MetadataReader mdr = new MetadataReader(filePNG.getAbsolutePath());
 
         // ==================================================
         // Test with metadata returned as a String
@@ -205,6 +221,9 @@ public class MetadataReaderTest {
 
     @Test
     public void testXYResolutionDPI() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
         XYResolutionDPI xyDPI = new XYResolutionDPI("180x180",
                 RESOLUTION_UNITS.PIXELS_PER_INCH);
         assertEquals(180, xyDPI.getX());
@@ -225,7 +244,50 @@ public class MetadataReaderTest {
     }
 
     @Test
-    public void testSavePictureMetadataInDocument() throws Exception {
+    public void ExtractBinaryMetadataInDocumentOpShouldFail() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
+        // ==================== Not passing properties
+        OperationContext ctx = new OperationContext(coreSession);
+        assertNotNull(ctx);
+        ctx.setInput(docPNG);
+        OperationChain chain = new OperationChain("testChain");
+        chain.add(ExtractBinaryMetadataInDocumentOp.ID);
+
+        try {
+            service.run(ctx, chain);
+            assertTrue(
+                    "The operation should have fail when no properties are passed",
+                    false);
+        } catch (Exception e) {
+            // Possibly, test it's a TraceException
+        }
+
+        // ==================== Pass an invalid xpath
+        ctx.setInput(docPNG);
+        chain = new OperationChain("testChain");
+        Properties props = new Properties();
+        props.put("dc:description", "all");
+        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("properties", props).set(
+                "xpath", "blahblah:blahblah");
+
+        try {
+            service.run(ctx, chain);
+            assertTrue(
+                    "The operation should have fail when an invalid path is passed",
+                    false);
+        } catch (Exception e) {
+            // Possibly, test it's a PropertyNotFoundException
+        }
+
+    }
+
+    @Test
+    public void testExtractBinaryMetadataInDocumentOp() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
         OperationContext ctx = new OperationContext(coreSession);
         assertNotNull(ctx);
 
@@ -260,7 +322,8 @@ public class MetadataReaderTest {
 
         props = new Properties();
         props.put("dc:description", "all");
-        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("properties", props).set("save", false);
+        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("properties", props).set(
+                "save", false);
         service.run(ctx, chain);
 
         assertEquals(changeToken, docPNG.getChangeToken());
@@ -269,6 +332,9 @@ public class MetadataReaderTest {
 
     @Test
     public void testWhenDocIsNotSaved() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
         File nuxeoFile = FileUtils.getResourceFileFromContext(NUXEO_LOGO);
         DocumentModel aPictDoc = coreSession.createDocumentModel(
                 parentOfTestDocs.getPathAsString(), filePNG.getName(),
@@ -287,7 +353,8 @@ public class MetadataReaderTest {
         Properties props = new Properties();
         props.put("imd:pixel_xdimension", KEYS.WIDTH);
         // Here too, we don't save
-        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("properties", props).set("save", false);
+        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("properties", props).set(
+                "save", false);
         service.run(ctx, chain);
 
         assertEquals(changeToken, aPictDoc.getChangeToken());
@@ -297,6 +364,8 @@ public class MetadataReaderTest {
 
     @Test
     public void testXMP() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
 
         MetadataReader mdr;
         String xmp;
@@ -354,9 +423,13 @@ public class MetadataReaderTest {
     @Test
     public void testGetMetadataWithExifTool() throws Exception {
 
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
         HashMap<String, String> result;
         MetadataReader mdr;
-        String [] theKeys = {"ImageSize", "FileName", "ImageHeight", "ImageWidth", "FileType", "JFIFVersion", "ProfileVersion", "ProfileDescription"};
+        String[] theKeys = { "ImageSize", "FileName", "ImageHeight",
+                "ImageWidth", "FileType", "JFIFVersion", "ProfileVersion",
+                "ProfileDescription" };
 
         mdr = new MetadataReader(filePNG.getAbsolutePath());
         result = mdr.getMetadata(theKeys, WHICH_TOOL.EXIFTOOL);
@@ -366,7 +439,8 @@ public class MetadataReaderTest {
         assertEquals("100", result.get("ImageWidth"));
         assertEquals("100", result.get("ImageHeight"));
         assertEquals("PNG", result.get("FileType"));
-        // Expected "" values returned because the image does not have these tags
+        // Expected "" values returned because the image does not have these
+        // tags
         assertEquals("", result.get("JFIFVersion"));
         assertEquals("", result.get("ProfileVersion"));
         assertEquals("", result.get("ProfileDescription"));
@@ -380,52 +454,151 @@ public class MetadataReaderTest {
         assertEquals("232", result.get("ImageHeight"));
         assertEquals("JPEG", result.get("FileType"));
         assertEquals("1.01", result.get("JFIFVersion"));
-        // Expected "" values returned because the image does not have these tags
+        // Expected "" values returned because the image does not have these
+        // tags
         assertEquals("", result.get("ProfileVersion"));
         assertEquals("", result.get("ProfileDescription"));
 
         mdr = new MetadataReader(fileTIF.getAbsolutePath());
         result = mdr.getMetadata(theKeys, WHICH_TOOL.EXIFTOOL);
         assertNotNull(result);
-        assertEquals("438x640", result.get("ImageSize"));
+        assertEquals("456x180", result.get("ImageSize"));
         assertEquals(fileTIF.getName(), result.get("FileName"));
-        assertEquals("438", result.get("ImageWidth"));
-        assertEquals("640", result.get("ImageHeight"));
-        assertEquals("JPEG", result.get("FileType"));
-        assertEquals("1.01", result.get("JFIFVersion"));
+        assertEquals("456", result.get("ImageWidth"));
+        assertEquals("180", result.get("ImageHeight"));
+        assertEquals("TIFF", result.get("FileType"));
+        assertEquals("", result.get("JFIFVersion"));
         assertEquals("2.1.0", result.get("ProfileVersion"));
-        assertEquals("sRGB IEC61966-2.1", result.get("ProfileDescription"));
+        assertEquals("Display", result.get("ProfileDescription"));
 
     }
 
     @Test
-    public void testSavePictureMetadataInDocument_ExifTool() throws Exception {
+    public void testExtractBinaryMetadataInDocumentOp_ExifTool()
+            throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
         OperationContext ctx = new OperationContext(coreSession);
         assertNotNull(ctx);
 
-        // ========================================
-        // TEST WITH DEFAULT VALUES
-        // ========================================
         OperationChain chain = new OperationChain("testChain");
 
         Properties props = new Properties();
-        props.put("dc:description", "ColorMode");
-        props.put("dc:language", "CopyrightNotice");
-        props.put("dc:format", "ImageHeight");
-        props.put("dc:rights", "ImageSize");
-        props.put("dc:source", "FileType");
-        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("tool",  "ExifTool").set("properties", props);
+        props.put("dc:description", "FileType");
+        props.put("dc:language", "ImageSize");
+        props.put("dc:format", "ProfileDescription");
+        props.put("dc:rights", "Keywords");
+        props.put("dc:source", "Title");
+        props.put("dc:coverage", "NOT_VALID_PROPERTY");
+        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("tool", "ExifTool").set(
+                "properties", props).set("save", false);
 
         ctx.setInput(docTIF);
         DocumentModel resultDoc = (DocumentModel) service.run(ctx, chain);
 
-        String s1 = (String) resultDoc.getPropertyValue("dc:description");
-        String s2 = (String) resultDoc.getPropertyValue("dc:language");
-        String s3 = (String) resultDoc.getPropertyValue("dc:format");
-        String s4 = (String) resultDoc.getPropertyValue("dc:rights");
-        String s5 = (String) resultDoc.getPropertyValue("dc:source");
+        assertEquals("TIFF", resultDoc.getPropertyValue("dc:description"));
+        assertEquals("456x180", resultDoc.getPropertyValue("dc:language"));
+        assertEquals("Display", resultDoc.getPropertyValue("dc:format"));
+        assertEquals("kw1,kw2", resultDoc.getPropertyValue("dc:rights"));
+        assertEquals("Some Test", resultDoc.getPropertyValue("dc:source"));
+        assertEquals("", resultDoc.getPropertyValue("dc:coverage"));
 
-        String last = "";
+    }
 
+    /*
+     * For files such as PDFs, Word, PowerPoint, ..., it is better to use
+     * ExifTool to get general infos. This is because
+     * ImageMagick/GraphicsMagick: (1) Sometime just fail getting the info and
+     * (2) Return infos only about eh last or last-1 "page" (or slide). NOOTE:
+     * This is done by im4java, not by the tool itself (but a call to identify
+     * -verbose on a video returns a _very_ long string, with info about each
+     * and every frame)
+     *
+     * => Se use only ExifTool for testing these files
+     */
+    @Test
+    public void testPdfFile() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
+        HashMap<String, String> result;
+        File f = FileUtils.getResourceFileFromContext("files/a.pdf");
+
+        MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
+
+        /*
+         * result = mdr.getMetadata(null, WHICH_TOOL.IMAGEMAGICK);
+         *
+         * result = mdr.getMetadata(null, WHICH_TOOL.GRAPHICSMAGICK);
+         */
+
+        // Wa have less info with ExifTool
+        result = mdr.getMetadata(null, WHICH_TOOL.EXIFTOOL);
+        assertEquals("PDF", result.get("FileType"));
+        assertEquals("1.4", result.get("PDFVersion"));
+        assertEquals("Mac OS X 10.10 Quartz PDFContext", result.get("Producer"));
+    }
+
+    /*
+     * [See comments for testPdfFile]
+     */
+    @Test
+    public void testMicrosoftWordFile() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
+        File f = FileUtils.getResourceFileFromContext("files/a.docx");
+
+        MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
+        HashMap<String, String> result = mdr.getMetadata(null,
+                WHICH_TOOL.EXIFTOOL);
+
+        assertEquals("DOCX", result.get("FileType"));
+        assertEquals("3", result.get("Pages"));
+        assertEquals("628", result.get("Words"));
+        assertEquals("3585", result.get("Characters"));
+
+    }
+
+    /*
+     * [See comments for testPdfFile]
+     */
+    @Test
+    public void testMicrosoftPowerPointFile() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
+        File f = FileUtils.getResourceFileFromContext("files/a.pptx");
+
+        MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
+        HashMap<String, String> result = mdr.getMetadata(null,
+                WHICH_TOOL.EXIFTOOL);
+
+        assertEquals("PPTX", result.get("FileType"));
+        assertEquals("6", result.get("Slides"));
+        assertEquals("0", result.get("HiddenSlides"));
+        assertEquals("Custom", result.get("PresentationFormat"));
+
+    }
+
+    /*
+     * [See comments for testPdfFile]
+     */
+    @Test
+    public void testMp4File() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
+        File f = FileUtils.getResourceFileFromContext("files/a.mp4");
+
+        MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
+        HashMap<String, String> result = mdr.getMetadata(null,
+                WHICH_TOOL.EXIFTOOL);
+
+        assertEquals("MP4", result.get("FileType"));
+        assertEquals("320x180", result.get("ImageSize"));
+        assertEquals("11.85 s", result.get("Duration"));
+        assertEquals("2997", result.get("TimeScale"));
     }
 }
