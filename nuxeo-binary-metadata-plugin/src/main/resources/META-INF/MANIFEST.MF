@@ -1,0 +1,13 @@
+Manifest-Version: 0.0.1
+Bundle-SymbolicName: nuxeo-file-metadata
+Bundle-Name: nuxeo-file-metadata
+Bundle-Version: 7.1.qualifier
+Bundle-ClassPath: .
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ManifestVersion: 2
+Bundle-Vendor: Nuxeo
+Nuxeo-Component: OSGI-INF/extensions/org.nuxeo.file.metadata.ExtractBi
+ naryMetadataInDocumentOp.xml,OSGI-INF/extensions/org.nuxeo.file.metad
+ ata.ExtractXMPFromBlobOp.xml
+

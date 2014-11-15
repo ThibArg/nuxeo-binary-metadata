@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.nuxeo.binary.metadata</groupId>
+    <artifactId>nuxeo-binary-metadata-parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nuxeo-binary-metadata-mp</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>zip</packaging>
+  <name>Marketplace package - ImageMetadata Utils</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.nuxeo.binary.metadata</groupId>
+      <artifactId>nuxeo-binary-metadata-plugin</artifactId>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.nuxeo.build</groupId>
+        <!-- When building for 5.8 -->
+        <!-- <artifactId>nuxeo-distribution-tools</artifactId> -->
+        <!-- When building for 5.9.2+ -->
+        <artifactId>ant-assembly-maven-plugin</artifactId>
+        <configuration>
+          <buildFile>${basedir}/src/main/assemble/assembly.xml</buildFile>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
