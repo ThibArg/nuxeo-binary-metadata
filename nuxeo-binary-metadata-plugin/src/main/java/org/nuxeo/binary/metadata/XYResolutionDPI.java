@@ -14,9 +14,9 @@
  * Contributors:
  *     thibaud
  */
-package org.nuxeo.file.metadata;
+package org.nuxeo.binary.metadata;
 
-import org.nuxeo.file.metadata.BinaryMetadataConstants.RESOLUTION_UNITS;
+import org.nuxeo.binary.metadata.BinaryMetadataConstants.RESOLUTION_UNITS;
 
 /*
  * Utility to split the "nnnxnnn" into 2 values expressed in DPI

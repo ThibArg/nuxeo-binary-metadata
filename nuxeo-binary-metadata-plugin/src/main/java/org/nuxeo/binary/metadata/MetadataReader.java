@@ -14,7 +14,7 @@
  * Contributors:
  *     Thibaud Arguillere
  */
-package org.nuxeo.file.metadata;
+package org.nuxeo.binary.metadata;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,11 +32,11 @@ import org.im4java.core.IM4JavaException;
 import org.im4java.core.Info;
 import org.im4java.core.InfoException;
 import org.im4java.process.ArrayListOutputConsumer;
+import org.nuxeo.binary.metadata.BinaryMetadataConstants.*;
+import org.nuxeo.binary.metadata.im4java.StringOutputConsumer;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.platform.picture.api.BlobHelper;
-import org.nuxeo.file.metadata.im4java.StringOutputConsumer;
-import org.nuxeo.file.metadata.BinaryMetadataConstants.*;
 import org.nuxeo.runtime.api.Framework;
 
 public class MetadataReader {

@@ -15,7 +15,7 @@
  *     thibaud
  */
 
-package org.nuxeo.file.metadata;
+package org.nuxeo.binary.metadata;
 
 import java.io.IOException;
 

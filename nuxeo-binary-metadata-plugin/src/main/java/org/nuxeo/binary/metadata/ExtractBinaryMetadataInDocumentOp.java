@@ -15,12 +15,13 @@
  *     thibaud
  */
 
-package org.nuxeo.file.metadata;
+package org.nuxeo.binary.metadata;
 
 import java.io.IOException;
 import java.util.HashMap;
 
 import org.im4java.core.InfoException;
+import org.nuxeo.binary.metadata.MetadataReader.WHICH_TOOL;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Context;
 import org.nuxeo.ecm.automation.core.annotations.Operation;
@@ -35,7 +36,6 @@ import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.model.Property;
 import org.nuxeo.ecm.core.api.model.PropertyException;
 import org.nuxeo.ecm.core.schema.types.Type;
-import org.nuxeo.file.metadata.MetadataReader.WHICH_TOOL;
 
 /**
  * Extract the metadata from the binary stored in the <code>xpath</code> field.

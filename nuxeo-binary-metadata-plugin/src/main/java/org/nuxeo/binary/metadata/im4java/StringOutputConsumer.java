@@ -14,7 +14,7 @@
  * Contributors:
  *     Thibaud Arguillere
  */
-package org.nuxeo.file.metadata.im4java;
+package org.nuxeo.binary.metadata.im4java;
 
 import java.io.BufferedReader;
 import java.io.IOException;

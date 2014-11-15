@@ -14,7 +14,7 @@
  * Contributors:
  *     Thibaud Arguillere
  */
-package org.nuxeo.file.metadata;
+package org.nuxeo.binary.metadata;
 
 public class BinaryMetadataConstants {
 
