@@ -1,8 +1,0 @@
-<component name="org.nuxeo.file.metadata.ExtractBinaryMetadataInDocumentOp">
-
-  <extension target="org.nuxeo.ecm.core.operation.OperationServiceComponent"
-    point="operations">
-    <operation class="org.nuxeo.file.metadata.ExtractBinaryMetadataInDocumentOp" />
-  </extension>
-
-</component>

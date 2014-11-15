@@ -15,7 +15,7 @@
  *     Thibaud Arguillere
  */
 
-package org.nuxeo.file.metadata.test;
+package org.nuxeo.binary.metadata.test;
 
 import static org.junit.Assert.*;
 
