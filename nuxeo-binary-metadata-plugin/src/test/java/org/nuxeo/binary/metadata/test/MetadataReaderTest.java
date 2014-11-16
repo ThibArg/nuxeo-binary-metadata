@@ -401,7 +401,7 @@ public class MetadataReaderTest {
         doLog(methodName + "...");
 
         if (!hasTool(TOOL.EXIFTOOL)) {
-            log.warn("Cannot run " + methodName
+            doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
         }
@@ -466,7 +466,7 @@ public class MetadataReaderTest {
         doLog(methodName + "...");
 
         if (!hasTool(TOOL.EXIFTOOL)) {
-            log.warn("Cannot run " + methodName
+            doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
         }
@@ -531,7 +531,7 @@ public class MetadataReaderTest {
 
         // ===================================== ExifTool
         if (!hasTool(TOOL.EXIFTOOL)) {
-            log.warn("Cannot check ExifTool with " + methodName
+            doLog("[WARN] Cannot check ExifTool with " + methodName
                     + "() because ExifTool is not available");
             return;
         } else {
@@ -581,7 +581,7 @@ public class MetadataReaderTest {
         doLog(methodName + "...");
 
         if (!hasTool(TOOL.EXIFTOOL)) {
-            log.warn("Cannot run " + methodName
+            doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
         }
@@ -614,7 +614,7 @@ public class MetadataReaderTest {
         doLog(methodName + "...");
 
         if (!hasTool(TOOL.EXIFTOOL)) {
-            log.warn("Cannot run " + methodName
+            doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
         }
@@ -641,7 +641,7 @@ public class MetadataReaderTest {
         doLog(methodName + "...");
 
         if (!hasTool(TOOL.EXIFTOOL)) {
-            log.warn("Cannot run " + methodName
+            doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
         }
@@ -668,7 +668,7 @@ public class MetadataReaderTest {
         doLog(methodName + "...");
 
         if (!hasTool(TOOL.EXIFTOOL)) {
-            log.warn("Cannot run " + methodName
+            doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
         }
