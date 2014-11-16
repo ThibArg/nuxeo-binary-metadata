@@ -49,7 +49,7 @@ public class ExtractXMPFromBlobOp {
         String xmp;
 
         MetadataReader mdr = new MetadataReader(inBlob);
-        xmp = mdr.getXMP();
+        xmp = mdr.readXMP();
 
         ctx.put(varName, xmp);
 

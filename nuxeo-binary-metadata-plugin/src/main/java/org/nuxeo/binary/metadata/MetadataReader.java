@@ -16,7 +16,6 @@
  */
 package org.nuxeo.binary.metadata;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -35,8 +34,6 @@ import org.nuxeo.binary.metadata.BinaryMetadataConstants.*;
 import org.nuxeo.binary.metadata.im4java.StringOutputConsumer;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.ClientException;
-import org.nuxeo.ecm.platform.picture.api.BlobHelper;
-import org.nuxeo.runtime.api.Framework;
 
 /**
  * This class uses <code>im4java</code> to extract metadata from a binary. For
@@ -70,11 +67,9 @@ import org.nuxeo.runtime.api.Framework;
  *
  * @since 6.0
  */
-public class MetadataReader {
+public class MetadataReader extends AbstractMetadataReadWrite {
 
     // private static Log log = LogFactory.getLog(MetadataReader.class);
-
-    protected String filePath = null;
 
     protected static String SYNC_STRING = "MetadataReader - lock";
 
@@ -86,22 +81,7 @@ public class MetadataReader {
      */
     public MetadataReader(Blob inBlob) throws IOException {
 
-        filePath = "";
-        try {
-            File f = BlobHelper.getFileFromBlob(inBlob);
-            filePath = f.getAbsolutePath();
-        } catch (Exception e) {
-            filePath = "";
-        }
-
-        if (filePath.isEmpty()) {
-            File tempFile = File.createTempFile("MDR-", "");
-            inBlob.transferTo(tempFile);
-            filePath = tempFile.getAbsolutePath();
-            tempFile.deleteOnExit();
-            Framework.trackFile(tempFile, this);
-        }
-
+        super.updateFilePath(inBlob);;
         ExternalTools.ToolAvailability.checkAndLogToolsAvailability();
     }
 
@@ -145,6 +125,27 @@ public class MetadataReader {
         return info;
     }
 
+    public String readOneMetadata(String inKey) throws InfoException {
+        return readOneMetadata(inKey, TOOL.IMAGEMAGICK);
+    }
+
+    public String readOneMetadata(String inKey, TOOL inToolToUse) throws InfoException {
+
+        String value = "";
+        if(inKey != null && !inKey.isEmpty()) {
+            String [] keys = {inKey};
+            HashMap<String, String> result = readMetadata(keys, inToolToUse);
+            if(result != null) {
+                value = result.get(inKey);
+                if(value == null) {
+                    value = "";
+                }
+            }
+        }
+
+        return value;
+    }
+
     /**
      * Wrapper calling getAllMetadata(TOOL.IMAGEMAGICK)
      *
@@ -154,8 +155,8 @@ public class MetadataReader {
      *
      * @since 6.0
      */
-    public String getAllMetadata() throws InfoException {
-        return getAllMetadata(TOOL.IMAGEMAGICK);
+    public String readAllMetadata() throws InfoException {
+        return readAllMetadata(TOOL.IMAGEMAGICK);
     }
 
     /**
@@ -170,13 +171,13 @@ public class MetadataReader {
      *
      * @since 6.0
      */
-    public String getAllMetadata(TOOL inToolToUse) throws ClientException,
+    public String readAllMetadata(TOOL inToolToUse) throws ClientException,
             InfoException {
 
         String result = "";
 
         if (inToolToUse == TOOL.EXIFTOOL) {
-            HashMap<String, String> r = getMetadataWithExifTool(null);
+            HashMap<String, String> r = readMetadataWithExifTool(null);
             Set<String> allKeys = r.keySet();
             for (String oneProp : allKeys) {
                 result += oneProp + "=" + r.get(oneProp) + "\n";
@@ -217,7 +218,7 @@ public class MetadataReader {
      *
      * @since 6.0
      */
-    public HashMap<String, String> getMetadata(String[] inTheseKeys,
+    public HashMap<String, String> readMetadata(String[] inTheseKeys,
             TOOL inToolToUse) throws ClientException {
 
         HashMap<String, String> result = new HashMap<String, String>();
@@ -225,7 +226,7 @@ public class MetadataReader {
         try {
             if (inToolToUse == TOOL.EXIFTOOL) {
 
-                result = getMetadataWithExifTool(inTheseKeys);
+                result = readMetadataWithExifTool(inTheseKeys);
 
             } else {
 
@@ -282,9 +283,9 @@ public class MetadataReader {
      *
      * @since 6.0
      */
-    public HashMap<String, String> getMetadata(String[] inTheseKeys)
+    public HashMap<String, String> readMetadata(String[] inTheseKeys)
             throws ClientException {
-        return getMetadata(inTheseKeys, TOOL.IMAGEMAGICK);
+        return readMetadata(inTheseKeys, TOOL.IMAGEMAGICK);
     }
 
     /**
@@ -295,7 +296,7 @@ public class MetadataReader {
      *
      * @since 6.0
      */
-    public String getXMP() throws ClientException {
+    public String readXMP() throws ClientException {
 
         try {
             ETOperation op = new ETOperation();
@@ -319,62 +320,6 @@ public class MetadataReader {
     }
 
     /**
-     * Utility class to parse a line returned by a "get tag" command line
-     * (identify, ...). Usually, such info is returned in kind-of formatted
-     * text. For example:
-     *
-     * <pre>
-     * File Type                       : TIFF
-     * MIME Type                       : image/tiff
-     * Exif Byte Order                 : Little-endian (Intel, II)
-     * Image Width                     : 2344
-     * Image Height                    : 7200
-     * </pre>
-     *
-     * This class parses the line, extracting key and value
-     *
-     * @since TODO
-     */
-    public class FilterLine {
-
-        protected String line;
-
-        protected String key;
-
-        protected String value;
-
-        public FilterLine() {
-            line = "";
-        }
-
-        protected void parse() {
-            key = null;
-            value = "";
-
-            String[] splitted = line.split(":", 2);
-            if (splitted.length > 0) {
-                key = splitted[0].trim();
-                if (splitted.length > 1) {
-                    value = splitted[1].trim();
-                }
-            }
-        }
-
-        public void setLine(String inLine) {
-            line = inLine;
-            parse();
-        }
-
-        public String getKey() {
-            return key;
-        }
-
-        public String getValue() {
-            return value;
-        }
-    }
-
-    /**
      * The key is case insensitive but must be one expected by ExifTool. And
      * there are hundreds of them. See ExifTool tags documentation at
      * http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html
@@ -389,7 +334,7 @@ public class MetadataReader {
      *
      * @since 6.0
      */
-    public HashMap<String, String> getMetadataWithExifTool(String[] inTheseKeys)
+    public HashMap<String, String> readMetadataWithExifTool(String[] inTheseKeys)
             throws ClientException {
 
         HashMap<String, String> result = new HashMap<String, String>();

@@ -168,7 +168,7 @@ public class MetadataReaderTest {
 
         String[] keysStr = { KEYS.WIDTH, KEYS.HEIGHT, KEYS.COLORSPACE,
                 KEYS.RESOLUTION, KEYS.UNITS };
-        HashMap<String, String> result = mdr.getMetadata(keysStr);
+        HashMap<String, String> result = mdr.readMetadata(keysStr);
         assertNotNull(theAssertMessage, result);
 
         assertEquals(theAssertMessage, inWidth, result.get(KEYS.WIDTH));
@@ -211,7 +211,7 @@ public class MetadataReaderTest {
         // ==================================================
         // Test with metadata returned as a String
         // ==================================================
-        String all = mdr.getAllMetadata();
+        String all = mdr.readAllMetadata();
         assertTrue(all != null);
         assertTrue(!all.isEmpty());
 
@@ -222,7 +222,7 @@ public class MetadataReaderTest {
         // ==================================================
         // Test with the result as a hashmap
         // ==================================================
-        HashMap<String, String> allInHashMap = mdr.getMetadata(null);
+        HashMap<String, String> allInHashMap = mdr.readMetadata(null);
         assertTrue(allInHashMap.containsKey("Format"));
         assertEquals("PNG (Portable Network Graphics)",
                 allInHashMap.get("Format"));
@@ -392,7 +392,7 @@ public class MetadataReaderTest {
         // Test on png file with no xmp
         // ==============================
         mdr = new MetadataReader(filePNG.getAbsolutePath());
-        xmp = mdr.getXMP();
+        xmp = mdr.readXMP();
         assertTrue(xmp.isEmpty());
 
         // ==============================
@@ -400,7 +400,7 @@ public class MetadataReaderTest {
         // ==============================
         File withXmpFile = FileUtils.getResourceFileFromContext(WITH_XMP);
         mdr = new MetadataReader(withXmpFile.getAbsolutePath());
-        xmp = mdr.getXMP();
+        xmp = mdr.readXMP();
         assertFalse(xmp.isEmpty());
 
         // Check it is a valid, well formed XML
@@ -457,7 +457,7 @@ public class MetadataReaderTest {
                 "ProfileDescription" };
 
         mdr = new MetadataReader(filePNG.getAbsolutePath());
-        result = mdr.getMetadata(theKeys, TOOL.EXIFTOOL);
+        result = mdr.readMetadata(theKeys, TOOL.EXIFTOOL);
         assertNotNull(result);
         assertEquals("100x100", result.get("ImageSize"));
         assertEquals(filePNG.getName(), result.get("FileName"));
@@ -471,7 +471,7 @@ public class MetadataReaderTest {
         assertEquals("", result.get("ProfileDescription"));
 
         mdr = new MetadataReader(fileJPEG.getAbsolutePath());
-        result = mdr.getMetadata(theKeys, TOOL.EXIFTOOL);
+        result = mdr.readMetadata(theKeys, TOOL.EXIFTOOL);
         assertNotNull(result);
         assertEquals("1597x232", result.get("ImageSize"));
         assertEquals(fileJPEG.getName(), result.get("FileName"));
@@ -485,7 +485,7 @@ public class MetadataReaderTest {
         assertEquals("", result.get("ProfileDescription"));
 
         mdr = new MetadataReader(fileTIF.getAbsolutePath());
-        result = mdr.getMetadata(theKeys, TOOL.EXIFTOOL);
+        result = mdr.readMetadata(theKeys, TOOL.EXIFTOOL);
         assertNotNull(result);
         assertEquals("456x180", result.get("ImageSize"));
         assertEquals(fileTIF.getName(), result.get("FileName"));
@@ -570,7 +570,7 @@ public class MetadataReaderTest {
          */
 
         // Wa have less info with ExifTool
-        result = mdr.getMetadata(null, TOOL.EXIFTOOL);
+        result = mdr.readMetadata(null, TOOL.EXIFTOOL);
         assertEquals("PDF", result.get("FileType"));
         assertEquals("1.4", result.get("PDFVersion"));
         assertEquals("Mac OS X 10.10 Quartz PDFContext", result.get("Producer"));
@@ -594,7 +594,7 @@ public class MetadataReaderTest {
         File f = FileUtils.getResourceFileFromContext("files/a.docx");
 
         MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
-        HashMap<String, String> result = mdr.getMetadata(null, TOOL.EXIFTOOL);
+        HashMap<String, String> result = mdr.readMetadata(null, TOOL.EXIFTOOL);
 
         assertEquals("DOCX", result.get("FileType"));
         assertEquals("3", result.get("Pages"));
@@ -621,7 +621,7 @@ public class MetadataReaderTest {
         File f = FileUtils.getResourceFileFromContext("files/a.pptx");
 
         MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
-        HashMap<String, String> result = mdr.getMetadata(null, TOOL.EXIFTOOL);
+        HashMap<String, String> result = mdr.readMetadata(null, TOOL.EXIFTOOL);
 
         assertEquals("PPTX", result.get("FileType"));
         assertEquals("6", result.get("Slides"));
@@ -648,7 +648,7 @@ public class MetadataReaderTest {
         File f = FileUtils.getResourceFileFromContext("files/a.mp4");
 
         MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
-        HashMap<String, String> result = mdr.getMetadata(null, TOOL.EXIFTOOL);
+        HashMap<String, String> result = mdr.readMetadata(null, TOOL.EXIFTOOL);
 
         assertEquals("MP4", result.get("FileType"));
         assertEquals("320x180", result.get("ImageSize"));

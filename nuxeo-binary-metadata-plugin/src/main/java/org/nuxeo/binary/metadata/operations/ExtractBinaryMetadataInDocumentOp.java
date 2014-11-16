@@ -150,7 +150,7 @@ public class ExtractBinaryMetadataInDocumentOp {
             }
         }
 
-        result = imdr.getMetadata(keysStr, toolToUse);
+        result = imdr.readMetadata(keysStr, toolToUse);
 
         for (String inXPath : properties.keySet()) {
             String value = result.get(properties.get(inXPath));
@@ -162,7 +162,7 @@ public class ExtractBinaryMetadataInDocumentOp {
         }
 
         if (!xpathForAll.isEmpty()) {
-            inDoc.setPropertyValue(xpathForAll, imdr.getAllMetadata());
+            inDoc.setPropertyValue(xpathForAll, imdr.readAllMetadata());
         }
 
         // Save the document
