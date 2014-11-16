@@ -24,14 +24,13 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.im4java.core.ETOperation;
 import org.im4java.core.ExiftoolCmd;
 import org.im4java.core.IM4JavaException;
 import org.im4java.core.Info;
 import org.im4java.core.InfoException;
 import org.im4java.process.ArrayListOutputConsumer;
+import org.nuxeo.binary.metadata.ExternalTools.TOOL;
 import org.nuxeo.binary.metadata.BinaryMetadataConstants.*;
 import org.nuxeo.binary.metadata.im4java.StringOutputConsumer;
 import org.nuxeo.ecm.core.api.Blob;
@@ -41,23 +40,11 @@ import org.nuxeo.runtime.api.Framework;
 
 public class MetadataReader {
 
-    private static Log log = LogFactory.getLog(MetadataReader.class);
+    // private static Log log = LogFactory.getLog(MetadataReader.class);
 
     protected String filePath = null;
 
-    protected static int exifToolAvailability = -1;
-
-    protected static String whyExifToolNotAvailable = "";
-
-    protected static int graphicsMagickAvailability = -1;
-
-    protected static String whyGraphicsMagickNotAvailable = "";
-
     protected static String SYNC_STRING = "MetadataReader - lock";
-
-    public enum TOOL {
-        IMAGEMAGICK, EXIFTOOL, GRAPHICSMAGICK
-    };
 
     public MetadataReader(Blob inBlob) throws IOException {
 
@@ -76,53 +63,14 @@ public class MetadataReader {
             tempFile.deleteOnExit();
             Framework.trackFile(tempFile, this);
         }
+
+        ExternalTools.ToolAvailability.checkAndLogToolsAvailability();
     }
 
     public MetadataReader(String inFullPath) {
         filePath = inFullPath;
-    }
 
-    protected void checkCommandLines() {
-        if (!isExifToolAvailable(false)) {
-            log.warn("ExifTool is not available, some command may fail");
-        }
-
-        if (!isGraphicsMagickAvailable(false)) {
-            log.warn("GraphicsMagick is not available, some command may fail");
-        }
-
-    }
-
-    public static boolean isExifToolAvailable(boolean inForceRetry) {
-
-        if (exifToolAvailability == -1 || inForceRetry) {
-
-            try {
-                Runtime.getRuntime().exec("exiftool -ver");
-                exifToolAvailability = 1;
-            } catch (Exception e) {
-                exifToolAvailability = 0;
-                whyExifToolNotAvailable = e.getMessage();
-            }
-        }
-
-        return exifToolAvailability == 1;
-    }
-
-    public static boolean isGraphicsMagickAvailable(boolean inForceRetry) {
-
-        if (graphicsMagickAvailability == -1 || inForceRetry) {
-
-            try {
-                Runtime.getRuntime().exec("gm -version");
-                graphicsMagickAvailability = 1;
-            } catch (Exception e) {
-                graphicsMagickAvailability = 0;
-                whyGraphicsMagickNotAvailable = e.getMessage();
-            }
-        }
-
-        return graphicsMagickAvailability == 1;
+        ExternalTools.ToolAvailability.checkAndLogToolsAvailability();
     }
 
     /*
@@ -179,8 +127,8 @@ public class MetadataReader {
      *
      * @since 6.0
      */
-    public String getAllMetadata(TOOL inToolToUse)
-            throws ClientException, InfoException {
+    public String getAllMetadata(TOOL inToolToUse) throws ClientException,
+            InfoException {
 
         String result = "";
 

@@ -32,12 +32,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.nuxeo.binary.metadata.ExternalTools.TOOL;
+import org.nuxeo.binary.metadata.ExternalTools.ToolAvailability;
 import org.nuxeo.binary.metadata.ExtractBinaryMetadataInDocumentOp;
 import org.nuxeo.binary.metadata.ExtractXMPFromBlobOp;
 import org.nuxeo.binary.metadata.MetadataReader;
 import org.nuxeo.binary.metadata.XYResolutionDPI;
 import org.nuxeo.binary.metadata.BinaryMetadataConstants.*;
-import org.nuxeo.binary.metadata.MetadataReader.TOOL;
 import org.nuxeo.common.utils.FileUtils;
 import org.nuxeo.ecm.automation.AutomationService;
 import org.nuxeo.ecm.automation.OperationChain;
@@ -115,28 +116,6 @@ public class MetadataReaderTest {
     protected String getCurrentMethodName(RuntimeException e) {
         StackTraceElement currentElement = e.getStackTrace()[0];
         return currentElement.getMethodName();
-    }
-
-    protected boolean hasTool(MetadataReader.TOOL inTool) {
-
-        if (graphicsMagickCheck == -1) {
-            graphicsMagickCheck = MetadataReader.isGraphicsMagickAvailable(true) ? 1
-                    : 0;
-        }
-        if (exifToolCheck == -1) {
-            exifToolCheck = MetadataReader.isExifToolAvailable(true) ? 1 : 0;
-        }
-
-        if (inTool == TOOL.GRAPHICSMAGICK) {
-            return graphicsMagickCheck == 1;
-        }
-
-        if (inTool == TOOL.EXIFTOOL) {
-            return exifToolCheck == 1;
-        }
-
-        throw new IllegalArgumentException(
-                "Was expecting GraphicsMagick or ExifTool: Test needs to be updated.");
     }
 
     @Before
@@ -400,7 +379,7 @@ public class MetadataReaderTest {
         String methodName = getCurrentMethodName(new RuntimeException());
         doLog(methodName + "...");
 
-        if (!hasTool(TOOL.EXIFTOOL)) {
+        if (!ToolAvailability.isExifToolAvailable()) {
             doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
@@ -465,7 +444,7 @@ public class MetadataReaderTest {
         String methodName = getCurrentMethodName(new RuntimeException());
         doLog(methodName + "...");
 
-        if (!hasTool(TOOL.EXIFTOOL)) {
+        if (!ToolAvailability.isExifToolAvailable()) {
             doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
@@ -530,7 +509,7 @@ public class MetadataReaderTest {
         OperationChain chain;
 
         // ===================================== ExifTool
-        if (!hasTool(TOOL.EXIFTOOL)) {
+        if (!ToolAvailability.isExifToolAvailable()) {
             doLog("[WARN] Cannot check ExifTool with " + methodName
                     + "() because ExifTool is not available");
             return;
@@ -580,7 +559,7 @@ public class MetadataReaderTest {
         String methodName = getCurrentMethodName(new RuntimeException());
         doLog(methodName + "...");
 
-        if (!hasTool(TOOL.EXIFTOOL)) {
+        if (!ToolAvailability.isExifToolAvailable()) {
             doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
@@ -613,7 +592,7 @@ public class MetadataReaderTest {
         String methodName = getCurrentMethodName(new RuntimeException());
         doLog(methodName + "...");
 
-        if (!hasTool(TOOL.EXIFTOOL)) {
+        if (!ToolAvailability.isExifToolAvailable()) {
             doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
@@ -640,7 +619,7 @@ public class MetadataReaderTest {
         String methodName = getCurrentMethodName(new RuntimeException());
         doLog(methodName + "...");
 
-        if (!hasTool(TOOL.EXIFTOOL)) {
+        if (!ToolAvailability.isExifToolAvailable()) {
             doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
@@ -667,7 +646,7 @@ public class MetadataReaderTest {
         String methodName = getCurrentMethodName(new RuntimeException());
         doLog(methodName + "...");
 
-        if (!hasTool(TOOL.EXIFTOOL)) {
+        if (!ToolAvailability.isExifToolAvailable()) {
             doLog("[WARN] Cannot run " + methodName
                     + "() because ExifTool is not available");
             return;
