@@ -55,25 +55,22 @@ public class MetadataReader {
 
     protected static String SYNC_STRING = "MetadataReader - lock";
 
-    public enum WHICH_TOOL {
+    public enum TOOL {
         IMAGEMAGICK, EXIFTOOL, GRAPHICSMAGICK
     };
 
     public MetadataReader(Blob inBlob) throws IOException {
 
-        // We try to directly get the full path of the binary, if possible
         filePath = "";
         try {
-
             File f = BlobHelper.getFileFromBlob(inBlob);
             filePath = f.getAbsolutePath();
-
         } catch (Exception e) {
             filePath = "";
         }
 
         if (filePath.isEmpty()) {
-            File tempFile = File.createTempFile("IMDR-", "");
+            File tempFile = File.createTempFile("MDR-", "");
             inBlob.transferTo(tempFile);
             filePath = tempFile.getAbsolutePath();
             tempFile.deleteOnExit();
@@ -167,7 +164,7 @@ public class MetadataReader {
      * @since 6.0
      */
     public String getAllMetadata() throws InfoException {
-        return getAllMetadata(WHICH_TOOL.IMAGEMAGICK);
+        return getAllMetadata(TOOL.IMAGEMAGICK);
     }
 
     /**
@@ -182,12 +179,12 @@ public class MetadataReader {
      *
      * @since 6.0
      */
-    public String getAllMetadata(WHICH_TOOL inToolToUse)
+    public String getAllMetadata(TOOL inToolToUse)
             throws ClientException, InfoException {
 
         String result = "";
 
-        if (inToolToUse == WHICH_TOOL.EXIFTOOL) {
+        if (inToolToUse == TOOL.EXIFTOOL) {
 
             HashMap<String, String> r = getMetadataWithExifTool(null);
             Set<String> allKeys = r.keySet();
@@ -196,7 +193,7 @@ public class MetadataReader {
             }
 
         } else {
-            Info info = getInfo(inToolToUse == WHICH_TOOL.GRAPHICSMAGICK);
+            Info info = getInfo(inToolToUse == TOOL.GRAPHICSMAGICK);
 
             Enumeration<String> props = info.getPropertyNames();
             while (props.hasMoreElements()) {
@@ -231,18 +228,18 @@ public class MetadataReader {
      * @since 6.0
      */
     public HashMap<String, String> getMetadata(String[] inTheseKeys,
-            WHICH_TOOL inToolToUse) throws ClientException {
+            TOOL inToolToUse) throws ClientException {
 
         HashMap<String, String> result = new HashMap<String, String>();
 
         try {
-            if (inToolToUse == WHICH_TOOL.EXIFTOOL) {
+            if (inToolToUse == TOOL.EXIFTOOL) {
 
                 result = getMetadataWithExifTool(inTheseKeys);
 
             } else {
 
-                Info info = getInfo(inToolToUse == WHICH_TOOL.GRAPHICSMAGICK);
+                Info info = getInfo(inToolToUse == TOOL.GRAPHICSMAGICK);
                 if (inTheseKeys == null || inTheseKeys.length == 0) {
 
                     Enumeration<String> props = info.getPropertyNames();
@@ -298,12 +295,13 @@ public class MetadataReader {
      */
     public HashMap<String, String> getMetadata(String[] inTheseKeys)
             throws ClientException {
-        return getMetadata(inTheseKeys, WHICH_TOOL.IMAGEMAGICK);
+        return getMetadata(inTheseKeys, TOOL.IMAGEMAGICK);
     }
 
     /**
+     * Uses ExifTool to extract the XML from the blob.
      *
-     * @return the whole XMP as XML
+     * @return the whole XMP as XML String
      * @throws ClientException
      *
      * @since 6.0

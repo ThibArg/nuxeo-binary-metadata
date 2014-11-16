@@ -26,6 +26,8 @@ import java.util.HashMap;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +37,7 @@ import org.nuxeo.binary.metadata.ExtractXMPFromBlobOp;
 import org.nuxeo.binary.metadata.MetadataReader;
 import org.nuxeo.binary.metadata.XYResolutionDPI;
 import org.nuxeo.binary.metadata.BinaryMetadataConstants.*;
-import org.nuxeo.binary.metadata.MetadataReader.WHICH_TOOL;
+import org.nuxeo.binary.metadata.MetadataReader.TOOL;
 import org.nuxeo.common.utils.FileUtils;
 import org.nuxeo.ecm.automation.AutomationService;
 import org.nuxeo.ecm.automation.OperationChain;
@@ -61,6 +63,8 @@ import com.google.inject.Inject;
 @Deploy({ "org.nuxeo.ecm.platform.picture.core", "nuxeo-binary-metadata",
         "org.nuxeo.ecm.platform.commandline.executor" })
 public class MetadataReaderTest {
+
+    private static final Log log = LogFactory.getLog(MetadataReaderTest.class);
 
     private static final String IMAGE_GIF = "images/a.gif";
 
@@ -92,6 +96,10 @@ public class MetadataReaderTest {
 
     protected DocumentModel docJPEG;
 
+    protected static int graphicsMagickCheck = -1;
+
+    protected static int exifToolCheck = -1;
+
     @Inject
     CoreSession coreSession;
 
@@ -109,8 +117,31 @@ public class MetadataReaderTest {
         return currentElement.getMethodName();
     }
 
+    protected boolean hasTool(MetadataReader.TOOL inTool) {
+
+        if (graphicsMagickCheck == -1) {
+            graphicsMagickCheck = MetadataReader.isGraphicsMagickAvailable(true) ? 1
+                    : 0;
+        }
+        if (exifToolCheck == -1) {
+            exifToolCheck = MetadataReader.isExifToolAvailable(true) ? 1 : 0;
+        }
+
+        if (inTool == TOOL.GRAPHICSMAGICK) {
+            return graphicsMagickCheck == 1;
+        }
+
+        if (inTool == TOOL.EXIFTOOL) {
+            return exifToolCheck == 1;
+        }
+
+        throw new IllegalArgumentException(
+                "Was expecting GraphicsMagick or ExifTool: Test needs to be updated.");
+    }
+
     @Before
     public void setUp() {
+
         // Setup documents if needed, etc.
         filePNG = FileUtils.getResourceFileFromContext(IMAGE_PNG);
         fileGIF = FileUtils.getResourceFileFromContext(IMAGE_GIF);
@@ -148,9 +179,10 @@ public class MetadataReaderTest {
 
     }
 
-    protected void checkImagesValues(File inWhichOne, String inWidth,
-            String inHeight, String inColorspace, String inResolution,
-            String inUnits, int xDPI, int yDPI) throws Exception {
+    protected void checkImagesValues_ImageMagick(File inWhichOne,
+            String inWidth, String inHeight, String inColorspace,
+            String inResolution, String inUnits, int xDPI, int yDPI)
+            throws Exception {
 
         String theAssertMessage = "getMetadata() for " + inWhichOne.getName();
         MetadataReader mdr = new MetadataReader(inWhichOne.getAbsolutePath());
@@ -180,18 +212,18 @@ public class MetadataReaderTest {
 
         doLog(getCurrentMethodName(new RuntimeException()) + "...");
 
-        checkImagesValues(filePNG, "100", "100", "sRGB", "37.79x37.79",
-                "PixelsPerCentimeter", 96, 96);
-        checkImagesValues(fileGIF, "328", "331", "sRGB", "72x72", "Undefined",
-                72, 72);
-        checkImagesValues(fileTIF, "456", "180", "sRGB", "72x72",
+        checkImagesValues_ImageMagick(filePNG, "100", "100", "sRGB",
+                "37.79x37.79", "PixelsPerCentimeter", 96, 96);
+        checkImagesValues_ImageMagick(fileGIF, "328", "331", "sRGB", "72x72",
+                "Undefined", 72, 72);
+        checkImagesValues_ImageMagick(fileTIF, "456", "180", "sRGB", "72x72",
                 "PixelsPerInch", 72, 72);
-        checkImagesValues(fileJPEG, "1597", "232", "sRGB", "96x96",
+        checkImagesValues_ImageMagick(fileJPEG, "1597", "232", "sRGB", "96x96",
                 "PixelsPerInch", 96, 96);
     }
 
     @Test
-    public void testGetAllMetadata() throws Exception {
+    public void testGetAllMetadata_ImageMagick() throws Exception {
 
         doLog(getCurrentMethodName(new RuntimeException()) + "...");
 
@@ -264,7 +296,7 @@ public class MetadataReaderTest {
             // Possibly, test it's a TraceException
         }
 
-        // ==================== Pass an invalid xpath
+        // ==================== Invalid xpath
         ctx.setInput(docPNG);
         chain = new OperationChain("testChain");
         Properties props = new Properties();
@@ -365,7 +397,14 @@ public class MetadataReaderTest {
     @Test
     public void testXMP() throws Exception {
 
-        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+        String methodName = getCurrentMethodName(new RuntimeException());
+        doLog(methodName + "...");
+
+        if (!hasTool(TOOL.EXIFTOOL)) {
+            log.warn("Cannot run " + methodName
+                    + "() because ExifTool is not available");
+            return;
+        }
 
         MetadataReader mdr;
         String xmp;
@@ -423,7 +462,14 @@ public class MetadataReaderTest {
     @Test
     public void testGetMetadataWithExifTool() throws Exception {
 
-        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+        String methodName = getCurrentMethodName(new RuntimeException());
+        doLog(methodName + "...");
+
+        if (!hasTool(TOOL.EXIFTOOL)) {
+            log.warn("Cannot run " + methodName
+                    + "() because ExifTool is not available");
+            return;
+        }
 
         HashMap<String, String> result;
         MetadataReader mdr;
@@ -432,7 +478,7 @@ public class MetadataReaderTest {
                 "ProfileDescription" };
 
         mdr = new MetadataReader(filePNG.getAbsolutePath());
-        result = mdr.getMetadata(theKeys, WHICH_TOOL.EXIFTOOL);
+        result = mdr.getMetadata(theKeys, TOOL.EXIFTOOL);
         assertNotNull(result);
         assertEquals("100x100", result.get("ImageSize"));
         assertEquals(filePNG.getName(), result.get("FileName"));
@@ -446,7 +492,7 @@ public class MetadataReaderTest {
         assertEquals("", result.get("ProfileDescription"));
 
         mdr = new MetadataReader(fileJPEG.getAbsolutePath());
-        result = mdr.getMetadata(theKeys, WHICH_TOOL.EXIFTOOL);
+        result = mdr.getMetadata(theKeys, TOOL.EXIFTOOL);
         assertNotNull(result);
         assertEquals("1597x232", result.get("ImageSize"));
         assertEquals(fileJPEG.getName(), result.get("FileName"));
@@ -460,7 +506,7 @@ public class MetadataReaderTest {
         assertEquals("", result.get("ProfileDescription"));
 
         mdr = new MetadataReader(fileTIF.getAbsolutePath());
-        result = mdr.getMetadata(theKeys, WHICH_TOOL.EXIFTOOL);
+        result = mdr.getMetadata(theKeys, TOOL.EXIFTOOL);
         assertNotNull(result);
         assertEquals("456x180", result.get("ImageSize"));
         assertEquals(fileTIF.getName(), result.get("FileName"));
@@ -477,32 +523,43 @@ public class MetadataReaderTest {
     public void testExtractBinaryMetadataInDocumentOp_ExifTool()
             throws Exception {
 
-        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+        String methodName = getCurrentMethodName(new RuntimeException());
+        doLog(methodName + "...");
 
-        OperationContext ctx = new OperationContext(coreSession);
-        assertNotNull(ctx);
+        OperationContext ctx;
+        OperationChain chain;
 
-        OperationChain chain = new OperationChain("testChain");
+        // ===================================== ExifTool
+        if (!hasTool(TOOL.EXIFTOOL)) {
+            log.warn("Cannot check ExifTool with " + methodName
+                    + "() because ExifTool is not available");
+            return;
+        } else {
+            ctx = new OperationContext(coreSession);
+            assertNotNull(ctx);
 
-        Properties props = new Properties();
-        props.put("dc:description", "FileType");
-        props.put("dc:language", "ImageSize");
-        props.put("dc:format", "ProfileDescription");
-        props.put("dc:rights", "Keywords");
-        props.put("dc:source", "Title");
-        props.put("dc:coverage", "NOT_VALID_PROPERTY");
-        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("tool", "ExifTool").set(
-                "properties", props).set("save", false);
+            chain = new OperationChain("testChain");
 
-        ctx.setInput(docTIF);
-        DocumentModel resultDoc = (DocumentModel) service.run(ctx, chain);
+            Properties props = new Properties();
+            props.put("dc:description", "FileType");
+            props.put("dc:language", "ImageSize");
+            props.put("dc:format", "ProfileDescription");
+            props.put("dc:rights", "Keywords");
+            props.put("dc:source", "Title");
+            props.put("dc:coverage", "NOT_VALID_PROPERTY");
+            chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("tool",
+                    "ExifTool").set("properties", props).set("save", false);
 
-        assertEquals("TIFF", resultDoc.getPropertyValue("dc:description"));
-        assertEquals("456x180", resultDoc.getPropertyValue("dc:language"));
-        assertEquals("Display", resultDoc.getPropertyValue("dc:format"));
-        assertEquals("kw1,kw2", resultDoc.getPropertyValue("dc:rights"));
-        assertEquals("Some Test", resultDoc.getPropertyValue("dc:source"));
-        assertEquals("", resultDoc.getPropertyValue("dc:coverage"));
+            ctx.setInput(docTIF);
+            DocumentModel resultDoc = (DocumentModel) service.run(ctx, chain);
+
+            assertEquals("TIFF", resultDoc.getPropertyValue("dc:description"));
+            assertEquals("456x180", resultDoc.getPropertyValue("dc:language"));
+            assertEquals("Display", resultDoc.getPropertyValue("dc:format"));
+            assertEquals("kw1,kw2", resultDoc.getPropertyValue("dc:rights"));
+            assertEquals("Some Test", resultDoc.getPropertyValue("dc:source"));
+            assertEquals("", resultDoc.getPropertyValue("dc:coverage"));
+        }
 
     }
 
@@ -520,7 +577,14 @@ public class MetadataReaderTest {
     @Test
     public void testPdfFile() throws Exception {
 
-        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+        String methodName = getCurrentMethodName(new RuntimeException());
+        doLog(methodName + "...");
+
+        if (!hasTool(TOOL.EXIFTOOL)) {
+            log.warn("Cannot run " + methodName
+                    + "() because ExifTool is not available");
+            return;
+        }
 
         HashMap<String, String> result;
         File f = FileUtils.getResourceFileFromContext("files/a.pdf");
@@ -528,13 +592,13 @@ public class MetadataReaderTest {
         MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
 
         /*
-         * result = mdr.getMetadata(null, WHICH_TOOL.IMAGEMAGICK);
+         * result = mdr.getMetadata(null, TOOL.IMAGEMAGICK);
          *
-         * result = mdr.getMetadata(null, WHICH_TOOL.GRAPHICSMAGICK);
+         * result = mdr.getMetadata(null, TOOL.GRAPHICSMAGICK);
          */
 
         // Wa have less info with ExifTool
-        result = mdr.getMetadata(null, WHICH_TOOL.EXIFTOOL);
+        result = mdr.getMetadata(null, TOOL.EXIFTOOL);
         assertEquals("PDF", result.get("FileType"));
         assertEquals("1.4", result.get("PDFVersion"));
         assertEquals("Mac OS X 10.10 Quartz PDFContext", result.get("Producer"));
@@ -546,13 +610,19 @@ public class MetadataReaderTest {
     @Test
     public void testMicrosoftWordFile() throws Exception {
 
-        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+        String methodName = getCurrentMethodName(new RuntimeException());
+        doLog(methodName + "...");
+
+        if (!hasTool(TOOL.EXIFTOOL)) {
+            log.warn("Cannot run " + methodName
+                    + "() because ExifTool is not available");
+            return;
+        }
 
         File f = FileUtils.getResourceFileFromContext("files/a.docx");
 
         MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
-        HashMap<String, String> result = mdr.getMetadata(null,
-                WHICH_TOOL.EXIFTOOL);
+        HashMap<String, String> result = mdr.getMetadata(null, TOOL.EXIFTOOL);
 
         assertEquals("DOCX", result.get("FileType"));
         assertEquals("3", result.get("Pages"));
@@ -567,13 +637,19 @@ public class MetadataReaderTest {
     @Test
     public void testMicrosoftPowerPointFile() throws Exception {
 
-        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+        String methodName = getCurrentMethodName(new RuntimeException());
+        doLog(methodName + "...");
+
+        if (!hasTool(TOOL.EXIFTOOL)) {
+            log.warn("Cannot run " + methodName
+                    + "() because ExifTool is not available");
+            return;
+        }
 
         File f = FileUtils.getResourceFileFromContext("files/a.pptx");
 
         MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
-        HashMap<String, String> result = mdr.getMetadata(null,
-                WHICH_TOOL.EXIFTOOL);
+        HashMap<String, String> result = mdr.getMetadata(null, TOOL.EXIFTOOL);
 
         assertEquals("PPTX", result.get("FileType"));
         assertEquals("6", result.get("Slides"));
@@ -588,13 +664,19 @@ public class MetadataReaderTest {
     @Test
     public void testMp4File() throws Exception {
 
-        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+        String methodName = getCurrentMethodName(new RuntimeException());
+        doLog(methodName + "...");
+
+        if (!hasTool(TOOL.EXIFTOOL)) {
+            log.warn("Cannot run " + methodName
+                    + "() because ExifTool is not available");
+            return;
+        }
 
         File f = FileUtils.getResourceFileFromContext("files/a.mp4");
 
         MetadataReader mdr = new MetadataReader(f.getAbsolutePath());
-        HashMap<String, String> result = mdr.getMetadata(null,
-                WHICH_TOOL.EXIFTOOL);
+        HashMap<String, String> result = mdr.getMetadata(null, TOOL.EXIFTOOL);
 
         assertEquals("MP4", result.get("FileType"));
         assertEquals("320x180", result.get("ImageSize"));

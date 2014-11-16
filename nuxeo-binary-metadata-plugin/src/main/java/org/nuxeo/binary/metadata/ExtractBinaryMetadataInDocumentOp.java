@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import org.im4java.core.InfoException;
-import org.nuxeo.binary.metadata.MetadataReader.WHICH_TOOL;
+import org.nuxeo.binary.metadata.MetadataReader.TOOL;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Context;
 import org.nuxeo.ecm.automation.core.annotations.Operation;
@@ -95,18 +95,18 @@ public class ExtractBinaryMetadataInDocumentOp {
             return inDoc;
         }
 
-        MetadataReader.WHICH_TOOL toolToUse = null;
+        MetadataReader.TOOL toolToUse = null;
         switch (tool.toLowerCase()) {
         case "graphicsmagick":
-            toolToUse = WHICH_TOOL.GRAPHICSMAGICK;
+            toolToUse = TOOL.GRAPHICSMAGICK;
             break;
 
         case "exiftool":
-            toolToUse = WHICH_TOOL.EXIFTOOL;
+            toolToUse = TOOL.EXIFTOOL;
             break;
 
         default:
-            toolToUse = WHICH_TOOL.IMAGEMAGICK;
+            toolToUse = TOOL.IMAGEMAGICK;
             break;
         }
 
