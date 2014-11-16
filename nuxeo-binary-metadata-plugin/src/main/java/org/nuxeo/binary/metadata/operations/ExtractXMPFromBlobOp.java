@@ -15,10 +15,11 @@
  *     thibaud
  */
 
-package org.nuxeo.binary.metadata;
+package org.nuxeo.binary.metadata.operations;
 
 import java.io.IOException;
 
+import org.nuxeo.binary.metadata.MetadataReader;
 import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Context;

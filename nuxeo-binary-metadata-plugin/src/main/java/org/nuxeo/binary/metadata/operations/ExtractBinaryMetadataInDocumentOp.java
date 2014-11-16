@@ -15,12 +15,14 @@
  *     thibaud
  */
 
-package org.nuxeo.binary.metadata;
+package org.nuxeo.binary.metadata.operations;
 
 import java.io.IOException;
 import java.util.HashMap;
 
 import org.im4java.core.InfoException;
+import org.nuxeo.binary.metadata.ExternalTools;
+import org.nuxeo.binary.metadata.MetadataReader;
 import org.nuxeo.binary.metadata.ExternalTools.TOOL;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Context;
