@@ -38,6 +38,38 @@ import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.platform.picture.api.BlobHelper;
 import org.nuxeo.runtime.api.Framework;
 
+/**
+ * This class uses <code>im4java</code> to extract metadata from a binary. For
+ * this purpose, it uses a command-line tool that must be installed on the
+ * server (see {@link ExternalTools}).
+ * <p>
+ * Some methods of the class can only be used with ExifTool (
+ * <code>getXMP()</code> for example), others can be used with any available
+ * tool.
+ * <p>
+ * Knowing the tool used and the tag it expects is an important part of
+ * successfully using this class. See the documentation of each tool.
+ * <p>
+ * For files such as PDFs, Word, PowerPoint, ..., as of "today" (2014-11) we
+ * recommend using ExifTool to get general info about the file. This is because
+ * ImageMagick/GraphicsMagick:
+ * <ul>
+ * <li>Sometime just fail getting the info</li>
+ * <li>and Return info only about the last or last-1 "page" (or slide).
+ * <ul>
+ * <li>NOTE: The later is the way the <code>Info</code> class of im4java works,
+ * it is not a limitation os IM/GM themselves (but a call to identify -verbose
+ * on a video returns a _very_ long string, with info about each and every
+ * frame)</li>
+ * <li>A future improvement would use direct calls to IM/GM, with the
+ * [sequenceNumber] path syntax, where you call
+ * <code>identify /path/to/tile.xyz[0]</code> for first image for example</li>
+ * </ul>
+ * </li>
+ * </ul>
+ *
+ * @since 6.0
+ */
 public class MetadataReader {
 
     // private static Log log = LogFactory.getLog(MetadataReader.class);
@@ -46,6 +78,12 @@ public class MetadataReader {
 
     protected static String SYNC_STRING = "MetadataReader - lock";
 
+    /**
+     * Constructor
+     *
+     * @param inBlob
+     * @throws IOException
+     */
     public MetadataReader(Blob inBlob) throws IOException {
 
         filePath = "";
@@ -67,6 +105,11 @@ public class MetadataReader {
         ExternalTools.ToolAvailability.checkAndLogToolsAvailability();
     }
 
+    /**
+     * Constructor
+     *
+     * @param inFullPath
+     */
     public MetadataReader(String inFullPath) {
         filePath = inFullPath;
 
@@ -103,7 +146,7 @@ public class MetadataReader {
     }
 
     /**
-     * Wrapper for getAllMetadata(WHICH_TOOL inToolToUse) using ImageMagick
+     * Wrapper calling getAllMetadata(TOOL.IMAGEMAGICK)
      *
      * @return a string with all the metadata. The string is formated by the
      *         tool used
@@ -117,8 +160,8 @@ public class MetadataReader {
 
     /**
      * Get all the tags available using <code>identify -verbose</code> for
-     * ImageMagick and GraphicsMagick, and the <code>-all</code> tag when used
-     * with ExifTool.
+     * ImageMagick and GraphicsMagick, and <code>-all</code> tag when used with
+     * ExifTool.
      *
      * @param inToolToUse
      * @return a string with all the metadata. The string is formated by the
@@ -133,13 +176,11 @@ public class MetadataReader {
         String result = "";
 
         if (inToolToUse == TOOL.EXIFTOOL) {
-
             HashMap<String, String> r = getMetadataWithExifTool(null);
             Set<String> allKeys = r.keySet();
             for (String oneProp : allKeys) {
                 result += oneProp + "=" + r.get(oneProp) + "\n";
             }
-
         } else {
             Info info = getInfo(inToolToUse == TOOL.GRAPHICSMAGICK);
 
@@ -155,17 +196,18 @@ public class MetadataReader {
     }
 
     /**
-     * If inTheseKeys is null or its length is 0, we return all properties.
+     * If inTheseKeys is null or its length is 0, all properties the tool can
+     * extract are returned.
      * <p>
-     * When used with ImageMagick or GraphicsMagick, the method uses the Info
-     * class of im4java.
+     * When used with ImageMagick or GraphicsMagick, the method uses the
+     * <code>Info</code> class of im4java.
      * <p>
      * When used with ExifTool it just calls getMetadataWithExifTool() (see this
      * method). Notice the keys are not the same when used with ImageMagick or
      * ExifTool.
      * <p>
-     * When a value is returned as null (the key does not exist), it is
-     * realigned to the empty string "".
+     * When a value is returned as null (the key does not exist) by the tool, it
+     * is realigned to the empty string "".
      *
      * @param inTheseKeys
      * @param inToolToUse
@@ -231,8 +273,7 @@ public class MetadataReader {
     }
 
     /**
-     * Wrapper for getMetadata(String[] inTheseKeys, WHICH_TOOL inToolToUse)
-     * using ImageMagick by default.
+     * Wrapper calling getMetadata(String[] inTheseKeys, TOOL.IMAGEMAGICK)
      *
      * @param inTheseKeys
      * @return a hash map with the values. A key not found is in the map with a

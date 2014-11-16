@@ -543,15 +543,8 @@ public class MetadataReaderTest {
     }
 
     /*
-     * For files such as PDFs, Word, PowerPoint, ..., it is better to use
-     * ExifTool to get general infos. This is because
-     * ImageMagick/GraphicsMagick: (1) Sometime just fail getting the info and
-     * (2) Return infos only about eh last or last-1 "page" (or slide). NOOTE:
-     * This is done by im4java, not by the tool itself (but a call to identify
-     * -verbose on a video returns a _very_ long string, with info about each
-     * and every frame)
-     *
-     * => Se use only ExifTool for testing these files
+     * See MetadataReader global comment: For PDF, Office, ... files, we use
+     * only ExifTool
      */
     @Test
     public void testPdfFile() throws Exception {
