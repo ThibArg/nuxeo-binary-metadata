@@ -454,48 +454,4 @@ public class MetadataReader {
 
         return result;
     }
-
-    /*
-     * [Temp, for quick tests]
-     */
-    public String getMetadataWithGM() throws IOException, InterruptedException,
-            IM4JavaException {
-
-        return "";
-        /*
-         * GMOperation op = new GMOperation(); op.addRawArgs("-verbose");
-         * op.addImage(); StringOutputConsumer output = new
-         * StringOutputConsumer(); GraphicsMagickCmd cmd = new
-         * GraphicsMagickCmd("identify"); cmd.setOutputConsumer(output);
-         * cmd.run(op, filePath); String s4 = output.getOutput();
-         *
-         * String s3 = ""; if(true) { ETOperation op2 = new ETOperation();
-         * op2.getTags("iptc:all");//op2.getTags("iptc", "all"); op2.addImage();
-         *
-         * // setup command and execute it (capture output) StringOutputConsumer
-         * output2 = new StringOutputConsumer(); ExiftoolCmd et = new
-         * ExiftoolCmd(); et.setOutputConsumer(output2); et.run(op, filePath);
-         * s3 = output2.getOutput(); }
-         *
-         *
-         *
-         * Info infoIM = new Info(filePath); String s1 = ""; Enumeration<String>
-         * zeProps = infoIM.getPropertyNames(); while
-         * (zeProps.hasMoreElements()) { String propertyName =
-         * zeProps.nextElement(); s1 += propertyName + "=" +
-         * infoIM.getProperty(propertyName) + "\n"; }
-         *
-         * Properties props = System.getProperties();
-         * props.setProperty("im4java.useGM", "true"); Info infoGM = new
-         * Info(filePath); props.setProperty("im4java.useGM", "false");
-         *
-         *
-         * String s2 = ""; zeProps = infoGM.getPropertyNames(); while
-         * (zeProps.hasMoreElements()) { String propertyName =
-         * zeProps.nextElement(); s2 += propertyName + "=" +
-         * infoGM.getProperty(propertyName) + "\n"; }
-         */
-
-        // return result;
-    }
 }
