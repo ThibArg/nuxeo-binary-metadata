@@ -1,7 +1,9 @@
 nuxeo-binary-metadata-utils
 ===========================
 
-_[Using GitHub s backup]_
+_Using GitHub s backup. This README Will be full of cool info, say, ASAP :->_
+
+Basically, this plug-in allows to use ImageMagick, GraphicsMagic or ExifTool to _read_ any binary metadata, and ExifTool to _write_ metadata
 
 
 ## Third Party Tools Used
