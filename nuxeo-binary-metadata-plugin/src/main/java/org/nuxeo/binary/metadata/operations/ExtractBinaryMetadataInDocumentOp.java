@@ -20,6 +20,8 @@ package org.nuxeo.binary.metadata.operations;
 import java.io.IOException;
 import java.util.HashMap;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.im4java.core.InfoException;
 import org.nuxeo.binary.metadata.MetadataReader;
 import org.nuxeo.binary.metadata.ExternalTools.TOOL;
@@ -66,8 +68,7 @@ public class ExtractBinaryMetadataInDocumentOp {
 
     public static final String ID = "Document.ExtractBinaryMetadata";
 
-    // private static final Log log =
-    // LogFactory.getLog(ExtractMetadataInDocument.class);
+    private static final Log log = LogFactory.getLog(ExtractBinaryMetadataInDocumentOp.class);
 
     @Context
     protected CoreSession session;
@@ -112,12 +113,13 @@ public class ExtractBinaryMetadataInDocumentOp {
         }
 
         // Get the blob
-        // We also give up silently if there is no binary, except if there is an error in the xpath
+        // We also give up silently if there is no binary, except if there is an
+        // error in the xpath
         Blob theBlob = null;
         try {
             theBlob = (Blob) inDoc.getPropertyValue(xpath);
         } catch (PropertyException e) {
-            if(e.getClass().getSimpleName().equals("PropertyNotFoundException")) {
+            if (e.getClass().getSimpleName().equals("PropertyNotFoundException")) {
                 throw new ClientException(e);
             }
             return inDoc;
@@ -126,17 +128,13 @@ public class ExtractBinaryMetadataInDocumentOp {
             return inDoc;
         }
 
-        // If we have a key-value map, use it.
-        // Else, we just get width, height, resolution and color space and
-        // store the values in the image_metadata fields
         MetadataReader imdr = new MetadataReader(theBlob);
         HashMap<String, String> result = null;
         String xpathForAll = "";
 
-        // The names of the metadata properties are stored as values in the
-        // map
+        // The names of the properties are stored as values in the map
         String[] keysStr = null;
-        if(properties != null && properties.size() > 0) {
+        if (properties != null && properties.size() > 0) {
             keysStr = new String[properties.size()];
             int idx = 0;
             for (String inXPath : properties.keySet()) {
@@ -149,42 +147,54 @@ public class ExtractBinaryMetadataInDocumentOp {
             }
         }
 
-        result = imdr.readMetadata(keysStr, toolToUse);
+        boolean ok = true;
+        try {
+            result = imdr.readMetadata(keysStr, toolToUse);
+        } catch (Exception e) {
+            // Just ignore if the tool can't read the file (a .csv for
+            // example)
+            log.error(
+                    "Error reading the metadata for document id "
+                            + inDoc.getId(), e);
+            ok = false;
+        }
 
-        for (String inXPath : properties.keySet()) {
-            String value = result.get(properties.get(inXPath));
+        if (ok) {
+            for (String inXPath : properties.keySet()) {
+                String value = result.get(properties.get(inXPath));
 
-            String theType = utils_getBasePropertyType(inDoc.getProperty(inXPath));
-            if(theType.equals("int") || theType.equals("long")) {
-                if(value.isEmpty()) {
-                    value = "0";
+                String theType = utils_getBasePropertyType(inDoc.getProperty(inXPath));
+                if (theType.equals("int") || theType.equals("long")) {
+                    if (value.isEmpty()) {
+                        value = "0";
+                    }
+                    long v = Math.round(Double.valueOf(value));
+                    value = "" + v;
+                } else if (theType.equals("float")) {
+                    if (value.isEmpty()) {
+                        value = "0.0";
+                    }
+                    float v = Float.valueOf(value);
+                    value = "" + v;
+                } else if (theType.equals("double")) {
+                    if (value.isEmpty()) {
+                        value = "0.0";
+                    }
+                    double v = Double.valueOf(value);
+                    value = "" + v;
                 }
-                long v = Math.round(Double.valueOf(value));
-                value = "" + v;
-            } else if(theType.equals("float")) {
-                if(value.isEmpty()) {
-                    value = "0.0";
-                }
-                float v = Float.valueOf(value);
-                value = "" + v;
-            } else if(theType.equals("double")) {
-                if(value.isEmpty()) {
-                    value = "0.0";
-                }
-                double v = Double.valueOf(value);
-                value = "" + v;
+
+                inDoc.setPropertyValue(inXPath, value);
             }
 
-            inDoc.setPropertyValue(inXPath, value);
-        }
+            if (!xpathForAll.isEmpty()) {
+                inDoc.setPropertyValue(xpathForAll, imdr.readAllMetadata());
+            }
 
-        if (!xpathForAll.isEmpty()) {
-            inDoc.setPropertyValue(xpathForAll, imdr.readAllMetadata());
-        }
-
-        // Save the document
-        if (save) {
-            session.saveDocument(inDoc);
+            // Save the document
+            if (save) {
+                session.saveDocument(inDoc);
+            }
         }
 
         return inDoc;
@@ -198,7 +208,7 @@ public class ExtractBinaryMetadataInDocumentOp {
         do {
             theType = t.getName();
             t = t.getSuperType();
-        } while(t != null);
+        } while (t != null);
 
         return theType;
     }

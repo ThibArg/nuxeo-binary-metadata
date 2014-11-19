@@ -19,6 +19,8 @@ package org.nuxeo.binary.metadata.operations;
 
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.nuxeo.binary.metadata.MetadataReader;
 import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.core.Constants;
@@ -37,6 +39,8 @@ public class ExtractXMPFromBlobOp {
 
     public static final String ID = "Blob.ExtractXMP";
 
+    private static final Log log = LogFactory.getLog(ExtractXMPFromBlobOp.class);
+
     @Context
     protected OperationContext ctx;
 
@@ -46,10 +50,14 @@ public class ExtractXMPFromBlobOp {
     @OperationMethod(collector = BlobCollector.class)
     public Blob run(Blob inBlob) throws IOException {
 
-        String xmp;
+        String xmp = "";
 
         MetadataReader mdr = new MetadataReader(inBlob);
-        xmp = mdr.readXMP();
+        try {
+            xmp = mdr.readXMP();
+        } catch (Exception e) {
+            log.error("Error reading the metadata for blob hash <" + inBlob.getDigest() + "> (can be empty)");
+        }
 
         ctx.put(varName, xmp);
 
