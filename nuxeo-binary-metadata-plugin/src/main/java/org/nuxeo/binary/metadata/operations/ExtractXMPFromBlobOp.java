@@ -34,7 +34,7 @@ import org.nuxeo.ecm.core.api.Blob;
 /**
  *
  */
-@Operation(id = ExtractXMPFromBlobOp.ID, category = Constants.CAT_BLOB, label = "Extract XMP", description = "Use <code>exiftool</code> to extract the XMP datat from the blob. Return the raw XMP as text (empty if there is no XMP metadata) in the <code>varName</code> context variable.")
+@Operation(id = ExtractXMPFromBlobOp.ID, category = Constants.CAT_BLOB, label = "Blob: Extract XMP", description = "Use <code>exiftool</code> to extract the XMP datat from the blob. Return the raw XMP as text (empty if there is no XMP metadata) in the <code>varName</code> context variable.")
 public class ExtractXMPFromBlobOp {
 
     public static final String ID = "Blob.ExtractXMP";
