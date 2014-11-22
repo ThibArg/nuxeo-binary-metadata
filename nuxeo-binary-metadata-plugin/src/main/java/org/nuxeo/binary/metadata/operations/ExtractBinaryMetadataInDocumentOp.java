@@ -24,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.im4java.core.InfoException;
 import org.nuxeo.binary.metadata.MetadataReader;
+import org.nuxeo.binary.metadata.MiscUtils;
 import org.nuxeo.binary.metadata.ExternalTools.TOOL;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Context;
@@ -37,7 +38,6 @@ import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.model.Property;
-import org.nuxeo.ecm.core.api.model.PropertyException;
 import org.nuxeo.ecm.core.schema.types.Type;
 
 /**
@@ -112,18 +112,9 @@ public class ExtractBinaryMetadataInDocumentOp {
             break;
         }
 
-        // Get the blob
-        // We also give up silently if there is no binary, except if there is an
-        // error in the xpath
-        Blob theBlob = null;
-        try {
-            theBlob = (Blob) inDoc.getPropertyValue(xpath);
-        } catch (PropertyException e) {
-            if (e.getClass().getSimpleName().equals("PropertyNotFoundException")) {
-                throw new ClientException(e);
-            }
-            return inDoc;
-        }
+
+        // Get the blob, do nothing if there is no blob
+        Blob theBlob = MiscUtils.getDocumentBlob(inDoc, xpath);
         if (theBlob == null) {
             return inDoc;
         }

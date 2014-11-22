@@ -23,6 +23,7 @@ import org.im4java.core.ETOperation;
 import org.im4java.core.ExiftoolCmd;
 import org.im4java.core.IM4JavaException;
 import org.nuxeo.binary.metadata.ExternalTools.ExifToolTagFormatter;
+import org.nuxeo.ecm.automation.core.util.Properties;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
@@ -100,7 +101,36 @@ public class MetadataWriter extends AbstractMetadataReadWrite {
     }
 
     /**
-     * Utility wrapper for writeMetadata(String[] inExpressions, boolean inWorkOnCopy)
+     * Utility wrapper for writeMetadata(String[] inExpressions, boolean
+     * inWorkOnCopy), using ecm.automation.core.util.Properties, as received in
+     * a parameter of an Automation Chain for exampel
+     *
+     * @param inProps - WARNING: These are
+     *            org.nuxeo.ecm.automation.core.util.Properties, not
+     *            java.utils.Properties
+     * @param inWorkOnCopy
+     * @return
+     * @throws ClientException
+     *
+     * @since TODO
+     */
+    public Blob writeMetadata(Properties inProps, boolean inWorkOnCopy)
+            throws ClientException {
+
+        int count = inProps.size();
+        String[] expressions = new String[count];
+        int idx = 0;
+        for (String key : inProps.keySet()) {
+            expressions[idx] = key + "=" + inProps.get(key);
+            idx += 1;
+        }
+
+        return this.writeMetadata(expressions, inWorkOnCopy);
+    }
+
+    /**
+     * Utility wrapper for writeMetadata(String[] inExpressions, boolean
+     * inWorkOnCopy)
      *
      * @param inMetadata
      * @param inWorkOnCopy
@@ -123,7 +153,8 @@ public class MetadataWriter extends AbstractMetadataReadWrite {
     }
 
     /**
-     * Utility wrapper for writeMetadata(String[] inExpressions, boolean inWorkOnCopy)
+     * Utility wrapper for writeMetadata(String[] inExpressions, boolean
+     * inWorkOnCopy)
      *
      * @param inExpression
      * @param inWorkOnCopy

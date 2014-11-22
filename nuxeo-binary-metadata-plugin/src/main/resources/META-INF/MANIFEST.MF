@@ -10,5 +10,7 @@ Bundle-Vendor: Nuxeo
 Nuxeo-Component: OSGI-INF/extensions/org.nuxeo.binary.metadata.operati
  ons.ExtractBinaryMetadataInDocumentOp.xml,OSGI-INF/extensions/org.nux
  eo.binary.metadata.operations.ExtractXMPFromBlobOp.xml,OSGI-INF/exten
- sions/org.nuxeo.binary.metadata.operations.WriteMetadataToBlobOp.xml
+ sions/org.nuxeo.binary.metadata.operations.WriteMetadataToBlobOp.xml,
+ OSGI-INF/extensions/org.nuxeo.binary.metadata.operations.WriteMetadat
+ aToBlobInDocOp.xml
 

@@ -51,20 +51,13 @@ public class WriteMetadataToBlobOp {
 
         Blob result = inBlob;
 
-        int count = properties.size();
-        String[] expressions = new String[count];
-        int idx = 0;
-        for (String key : properties.keySet()) {
-            expressions[idx] = key + "=" + properties.get(key);
-            idx += 1;
-        }
-
         try {
             MetadataWriter mw = new MetadataWriter(inBlob);
-            result = mw.writeMetadata(expressions, workOnACopy);
+            result = mw.writeMetadata(properties, workOnACopy);
         } catch (Exception e) {
             throw new ClientException(e);
         }
+
         return result;
     }
 
