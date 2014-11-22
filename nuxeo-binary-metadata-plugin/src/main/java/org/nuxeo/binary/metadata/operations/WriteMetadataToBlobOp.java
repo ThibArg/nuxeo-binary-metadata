@@ -34,6 +34,8 @@ import org.nuxeo.ecm.core.api.ClientException;
  * operator. It does not handle other operators supported by ExifTool, such as
  * += or -= for example.
  *
+ * To delete a metadata, just pass nothing as value <code>Keywords=</code> for example
+ *
  */
 @Operation(id = WriteMetadataToBlobOp.ID, category = Constants.CAT_BLOB, label = "Blob: Write Metadata", description = "")
 public class WriteMetadataToBlobOp {

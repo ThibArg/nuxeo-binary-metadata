@@ -39,6 +39,7 @@ import org.nuxeo.ecm.core.api.DocumentModel;
  * operator. It does not handle other operators supported by ExifTool, such as
  * += or -= for example.
  *
+ * To delete a metadata, just pass nothing as value <code>Keywords=</code> for example
  */
 @Operation(id = WriteMetadataToBlobInDocOp.ID, category = Constants.CAT_DOCUMENT, label = "Document: Write Blob Metadata", description = "")
 public class WriteMetadataToBlobInDocOp {

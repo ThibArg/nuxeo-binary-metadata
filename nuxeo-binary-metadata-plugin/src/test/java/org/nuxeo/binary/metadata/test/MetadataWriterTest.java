@@ -30,9 +30,16 @@ import org.junit.runner.RunWith;
 import org.nuxeo.binary.metadata.MetadataReader;
 import org.nuxeo.binary.metadata.MetadataWriter;
 import org.nuxeo.binary.metadata.ExternalTools.TOOL;
+import org.nuxeo.binary.metadata.operations.ExtractBinaryMetadataInDocumentOp;
+import org.nuxeo.binary.metadata.operations.WriteMetadataToBlobInDocOp;
+import org.nuxeo.binary.metadata.operations.WriteMetadataToBlobOp;
 import org.nuxeo.common.utils.FileUtils;
 import org.nuxeo.ecm.automation.AutomationService;
+import org.nuxeo.ecm.automation.OperationChain;
+import org.nuxeo.ecm.automation.OperationContext;
+import org.nuxeo.ecm.automation.core.util.Properties;
 import org.nuxeo.ecm.automation.test.EmbeddedAutomationServerFeature;
+import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
@@ -51,19 +58,21 @@ import com.google.inject.Inject;
         "org.nuxeo.ecm.platform.commandline.executor" })
 public class MetadataWriterTest {
 
-    private static final Log log = LogFactory.getLog(MetadataWriterTest.class);
+    protected static final Log log = LogFactory.getLog(MetadataWriterTest.class);
 
-    private static final String IMAGE_GIF = "images/a.gif";
+    protected static final String IMAGE_GIF = "images/a.gif";
 
-    private static final String IMAGE_JPEG = "images/a.jpg";
+    protected static final String IMAGE_JPEG = "images/a.jpg";
 
-    private static final String IMAGE_PNG = "images/a.png";
+    protected static final String IMAGE_PNG = "images/a.png";
 
-    private static final String IMAGE_TIF = "images/a.tif";
+    protected static final String IMAGE_TIF = "images/a.tif";
 
-    private static final String NUXEO_LOGO = "images/Nuxeo.png";
+    protected static final String NUXEO_LOGO = "images/Nuxeo.png";
 
-    private static final String WITH_XMP = "images/with-xmp.jpg";
+    protected static final String WITH_XMP = "images/with-xmp.jpg";
+
+    protected static final String KEYWORDS = "kw1, kw2, otherKW";
 
     protected File filePNG;
 
@@ -156,22 +165,94 @@ public class MetadataWriterTest {
         // Add keywords to a copy of the file
         MetadataWriter mdw = new MetadataWriter(fileJPEG.getAbsolutePath());
         FileBlob result = (FileBlob) mdw.writeMetadata(
-                "Keywords=kw1, kw2, otherKW", true);
+                "Keywords=" + KEYWORDS, true);
         assertNotNull(result);
         String resultPath = result.getFile().getAbsolutePath();
         mdr = new MetadataReader(resultPath);
         String kws = mdr.readOneMetadata("Keywords", TOOL.EXIFTOOL);
-        assertEquals("kw1, kw2, otherKW", kws);
+        assertEquals(KEYWORDS, kws);
 
         // Now, add a new keyword toe the same file (not a copy)
-        // Notice: At this step, we are working on the previoeus copy (we don't
-        // want to alter the oridinal test file)
+        // Notice: At this step, we are working on the previous copy (we don't
+        // want to alter the original test file)
         mdw = new MetadataWriter(resultPath);
         result = (FileBlob) mdw.writeMetadata("Keywords+=yetAnotherOne", false);
         assertNotNull(result);
 
         mdr = new MetadataReader(resultPath);
         kws = mdr.readOneMetadata("Keywords", TOOL.EXIFTOOL);
-        assertEquals("kw1, kw2, otherKW, yetAnotherOne", kws);
+        assertEquals(KEYWORDS + ", yetAnotherOne", kws);
+    }
+
+    @Test
+    public void testWriteMetadataToBlobOperation() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+
+        // Check there is no keywords
+        MetadataReader mdr = new MetadataReader(fileJPEG.getAbsolutePath());
+        assertEquals("", mdr.readOneMetadata("Keywords", TOOL.EXIFTOOL));
+
+        //Add keywords on a copy, using the operation
+        OperationContext ctx = new OperationContext(coreSession);
+        assertNotNull(ctx);
+
+        Properties props = new Properties();
+        props.put("Keywords", KEYWORDS);
+        OperationChain chain = new OperationChain("testChain");
+        chain.add(WriteMetadataToBlobOp.ID)
+                    .set("properties", props)
+                    .set("workOnACopy",  true);
+
+        ctx.setInput(new FileBlob(fileJPEG));
+        Blob result = (Blob) service.run(ctx, chain);
+        // For the test, we should have a FileBlob
+        assertTrue(result instanceof FileBlob);
+
+        mdr = new MetadataReader(result);
+        String kws = mdr.readOneMetadata("Keywords", TOOL.EXIFTOOL);
+        assertEquals(KEYWORDS, kws);
+
+        // Now, remove the metadata from previous result
+        props = new Properties();
+        props.put("Keywords", "");
+        chain = new OperationChain("testChain");
+        chain.add(WriteMetadataToBlobOp.ID)
+                    .set("properties", props)
+                    .set("workOnACopy",  true);
+        ctx.setInput(result);
+        result = (Blob) service.run(ctx, chain);
+        mdr = new MetadataReader(result);
+        kws = mdr.readOneMetadata("Keywords", TOOL.EXIFTOOL);
+        assertEquals("", kws);
+    }
+
+    @Test
+    public void testWriteMetadataToBlobInDocOperation() throws Exception {
+
+        doLog(getCurrentMethodName(new RuntimeException()) + "...");
+        OperationContext ctx = new OperationContext(coreSession);
+        assertNotNull(ctx);
+
+        Properties props = new Properties();
+        props.put("Keywords", KEYWORDS);
+        OperationChain chain = new OperationChain("testChain");
+        chain.add(WriteMetadataToBlobInDocOp.ID)
+                    .set("properties", props)
+                    .set("save",  true); // let the default xpath value
+
+        ctx.setInput(docJPEG);
+        DocumentModel result = (DocumentModel) service.run(ctx, chain);
+
+        // Test we have the keywords
+        props = new Properties();
+        props.put("dc:description", "Keywords");
+        chain.add(ExtractBinaryMetadataInDocumentOp.ID).set("tool",
+                "ExifTool").set("properties", props).set("save", false);// No save
+        ctx.setInput(result);
+        result = (DocumentModel) service.run(ctx, chain);
+        String kws = (String) result.getPropertyValue("dc:description");
+        assertEquals(KEYWORDS, kws);
+
     }
 }

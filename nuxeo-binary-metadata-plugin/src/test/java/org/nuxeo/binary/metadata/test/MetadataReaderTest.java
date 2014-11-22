@@ -65,19 +65,19 @@ import com.google.inject.Inject;
         "org.nuxeo.ecm.platform.commandline.executor" })
 public class MetadataReaderTest {
 
-    private static final Log log = LogFactory.getLog(MetadataReaderTest.class);
+    protected static final Log log = LogFactory.getLog(MetadataReaderTest.class);
 
-    private static final String IMAGE_GIF = "images/a.gif";
+    protected static final String IMAGE_GIF = "images/a.gif";
 
-    private static final String IMAGE_JPEG = "images/a.jpg";
+    protected static final String IMAGE_JPEG = "images/a.jpg";
 
-    private static final String IMAGE_PNG = "images/a.png";
+    protected static final String IMAGE_PNG = "images/a.png";
 
-    private static final String IMAGE_TIF = "images/a.tif";
+    protected static final String IMAGE_TIF = "images/a.tif";
 
-    private static final String NUXEO_LOGO = "images/Nuxeo.png";
+    protected static final String NUXEO_LOGO = "images/Nuxeo.png";
 
-    private static final String WITH_XMP = "images/with-xmp.jpg";
+    protected static final String WITH_XMP = "images/with-xmp.jpg";
 
     protected File filePNG;
 
