@@ -1,6 +1,17 @@
 nuxeo-binary-metadata
 ===========================
 
+# IMPORTANT - 2015-08-22 - Obsolete
+Since its version FastTrack 7.2, [Nuxeo](http://www.nuxeo.com) natively lets you read/write metadata, using exiftool by default. As always with Nuxeo, the fetaure is configurable, so you can customize the metadata you want to get/set, you have operations to handle the metadata, ...
+
+You can find the documentation on our [website](https://doc.nuxeo.com/display/NXDOC/Binary+Metadata), and the source code on [GitHub](https://github.com/nuxeo/nuxeo-binary-metadata).
+
+So, now that the feature is in Nuxoe, this plug-in will not be maintained, please use Nuxeo native feature instead.
+
+
+# (Previous Documentation)
+
+
 This plug-in allows to use ImageMagick, GraphicsMagic or ExifTool to _read_ any binary metadata, and ExifTool to _write_ metadata
 
 ## About - Requirements
